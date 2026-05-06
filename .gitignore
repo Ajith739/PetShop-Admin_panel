@@ -1,5 +1,16 @@
+# =========================
+# React / Node
+# =========================
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+.vite/
+*.local
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,16 +18,39 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Environment files
+.env
+.env.*
+!.env.example
 
-# Editor directories and files
-.vscode/*
+# =========================
+# Laravel / PHP
+# =========================
+backend/vendor/
+backend/public/storage/
+backend/storage/*.key
+backend/storage/logs/
+backend/bootstrap/cache/
+
+# If Laravel is in root instead of backend/
+vendor/
+storage/*.key
+storage/logs/
+bootstrap/cache/
+
+# Cache / temp files
+*.cache
+*.tmp
+
+# =========================
+# Editor / OS
+# =========================
+.vscode/
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
+Thumbs.db
+
 *.suo
 *.ntvs*
 *.njsproj
