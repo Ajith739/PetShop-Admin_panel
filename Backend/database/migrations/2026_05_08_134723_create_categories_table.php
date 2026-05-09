@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->string('name'); // Fish, Dogs, Cats, Birds
-            $table->string('slug')->unique();
+            $table->string('slug');
             $table->text('description')->nullable();
             $table->string('image')->nullable();
             $table->boolean('is_active')->default(true);

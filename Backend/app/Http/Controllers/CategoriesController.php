@@ -34,16 +34,19 @@ class categoriesController extends Controller
     // PUT /api/categories/{id}
     public function update(Request $request, $id)
     {
-        $category = categories::find(id);
-        if (category) {
+        $category = categories::find($id);
+
+        if (!$category) {
             return response()->json([
                 'message' => 'Category not found'
             ], 404);
         }
+
         $validated = $request->validate([
-            'name' => 'required|unique:categories,name,' . $id,
-            'slug' => 'required|unique:categories,slug,' . $id,
+            'name' => 'required',
+            'slug' => 'required',
             'description' => 'nullable|string',
+            'image' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
@@ -59,7 +62,7 @@ class categoriesController extends Controller
     public function destroy($id)
     {
         $category = categories::find($id);
-        if ($category) {
+        if (!$category) {
 
             return response()->json([
                 'message' => 'Category not found'
