@@ -3,7 +3,14 @@
 use Illuminate\Support\Facades\Route;
 // Import our AuthController
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\CategoriesController;
+// Import Controllers using array syntax
+use App\Http\Controllers\
+{
+    CategoriesController,
+    BreedsController,
+    PetsController
+};
+
 /*
 |--------------------------------------------------------------------------
 | PUBLIC ROUTES (No authentication required)
@@ -41,5 +48,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // CATEGORY ROUTES
     Route::apiResource('categories', categoriesController::class);
+    // Breeds
+    Route::apiResource('breeds', BreedsController::class);
+
+    // Pets
+    Route::apiResource('pets', PetsController::class);
+    Route::post('pets/bulk-delete', [PetsController::class, 'bulkDelete']);
+    Route::patch('pets/{pet}/stock', [PetsController::class, 'updateStock']);
 
 });
