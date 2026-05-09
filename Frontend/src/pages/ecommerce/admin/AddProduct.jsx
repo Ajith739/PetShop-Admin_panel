@@ -1,391 +1,439 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import usePhoenixInit from '../../../hooks/usePhoenixInit';
-
-const pageHtml = `<nav class="mb-3" aria-label="breadcrumb">
-          <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="#!">Page 1</a></li>
-            <li class="breadcrumb-item"><a href="#!">Page 2</a></li>
-            <li class="breadcrumb-item active">Default</li>
-          </ol>
-        </nav>
-        <form class="mb-9">
-          <div class="row g-3 flex-between-end mb-5">
-            <div class="col-auto">
-              <h2 class="mb-2">Add a product</h2>
-              <h5 class="text-body-tertiary fw-semibold">Orders placed across your store</h5>
-            </div>
-            <div class="col-auto"><button class="btn btn-phoenix-secondary me-2 mb-2 mb-sm-0" type="button">Discard</button>
-              <button class="btn btn-phoenix-primary me-2 mb-2 mb-sm-0" type="button">Save draft</button>
-              <button class="btn btn-primary mb-2 mb-sm-0" type="submit">Publish product</button>
-            </div>
-          </div>
-          <div class="row g-5">
-            <div class="col-12 col-xl-8">
-              <h4 class="mb-3">Product Title</h4><input class="form-control mb-5" type="text" placeholder="Write title here..." />
-              <div class="mb-6">
-                <h4 class="mb-3"> Product Description</h4><textarea class="tinymce" name="content" data-tinymce='{"height":"15rem","placeholder":"Write a description here..."}'></textarea>
-              </div>
-              <h4 class="mb-3">Display images</h4>
-              <div class="dropzone dropzone-multiple p-0 mb-5" id="my-awesome-dropzone" data-dropzone="data-dropzone">
-                <div class="fallback"><input name="file" type="file" multiple="multiple" /></div>
-                <div class="dz-preview d-flex flex-wrap">
-                  <div class="border border-translucent bg-body-emphasis rounded-3 d-flex flex-center position-relative me-2 mb-2" style="height:80px;width:80px;"><img class="dz-image" src="/assets/img/products/23.png" alt="..." data-dz-thumbnail="data-dz-thumbnail" /><a class="dz-remove text-body-quaternary" href="#!" data-dz-remove="data-dz-remove"><span data-feather="x"></span></a></div>
-                </div>
-                <div class="dz-message text-body-tertiary text-opacity-85" data-dz-message="data-dz-message">Drag your photo here<span class="text-body-secondary px-1">or</span><button class="btn btn-link p-0" type="button">Browse from device</button><br /><img class="mt-3 me-2" src="/assets/img/icons/image-icon.png" width="40" alt="" /></div>
-              </div>
-              <h4 class="mb-3">Inventory</h4>
-              <div class="row g-0 border-top border-bottom">
-                <div class="col-sm-4">
-                  <div class="nav flex-sm-column border-bottom border-bottom-sm-0 border-end-sm fs-9 vertical-tab h-100 justify-content-between" role="tablist" aria-orientation="vertical"><a class="nav-link border-end border-end-sm-0 border-bottom-sm text-center text-sm-start cursor-pointer outline-none d-sm-flex align-items-sm-center active" id="pricingTab" data-bs-toggle="tab" data-bs-target="#pricingTabContent" role="tab" aria-controls="pricingTabContent" aria-selected="true"> <span class="me-sm-2 fs-4 nav-icons" data-feather="tag"></span><span class="d-none d-sm-inline">Pricing</span></a><a class="nav-link border-end border-end-sm-0 border-bottom-sm text-center text-sm-start cursor-pointer outline-none d-sm-flex align-items-sm-center" id="restockTab" data-bs-toggle="tab" data-bs-target="#restockTabContent" role="tab" aria-controls="restockTabContent" aria-selected="false"> <span class="me-sm-2 fs-4 nav-icons" data-feather="package"></span><span class="d-none d-sm-inline">Restock</span></a><a class="nav-link border-end border-end-sm-0 border-bottom-sm text-center text-sm-start cursor-pointer outline-none d-sm-flex align-items-sm-center" id="shippingTab" data-bs-toggle="tab" data-bs-target="#shippingTabContent" role="tab" aria-controls="shippingTabContent" aria-selected="false"> <span class="me-sm-2 fs-4 nav-icons" data-feather="truck"></span><span class="d-none d-sm-inline">Shipping</span></a><a class="nav-link border-end border-end-sm-0 border-bottom-sm text-center text-sm-start cursor-pointer outline-none d-sm-flex align-items-sm-center" id="productsTab" data-bs-toggle="tab" data-bs-target="#productsTabContent" role="tab" aria-controls="productsTabContent" aria-selected="false"> <span class="me-sm-2 fs-4 nav-icons" data-feather="globe"></span><span class="d-none d-sm-inline">Global Delivery</span></a><a class="nav-link border-end border-end-sm-0 border-bottom-sm text-center text-sm-start cursor-pointer outline-none d-sm-flex align-items-sm-center" id="attributesTab" data-bs-toggle="tab" data-bs-target="#attributesTabContent" role="tab" aria-controls="attributesTabContent" aria-selected="false"> <span class="me-sm-2 fs-4 nav-icons" data-feather="sliders"></span><span class="d-none d-sm-inline">Attributes</span></a><a class="nav-link text-center text-sm-start cursor-pointer outline-none d-sm-flex align-items-sm-center" id="advancedTab" data-bs-toggle="tab" data-bs-target="#advancedTabContent" role="tab" aria-controls="advancedTabContent" aria-selected="false"> <span class="me-sm-2 fs-4 nav-icons" data-feather="lock"></span><span class="d-none d-sm-inline">Advanced</span></a></div>
-                </div>
-                <div class="col-sm-8">
-                  <div class="tab-content py-3 ps-sm-4 h-100">
-                    <div class="tab-pane fade show active" id="pricingTabContent" role="tabpanel">
-                      <h4 class="mb-3 d-sm-none">Pricing</h4>
-                      <div class="row g-3">
-                        <div class="col-12 col-lg-6">
-                          <h5 class="mb-2 text-body-highlight">Regular price</h5><input class="form-control" type="text" placeholder="$$$" />
-                        </div>
-                        <div class="col-12 col-lg-6">
-                          <h5 class="mb-2 text-body-highlight">Sale price</h5><input class="form-control" type="text" placeholder="$$$" />
-                        </div>
-                      </div>
-                    </div>
-                    <div class="tab-pane fade h-100" id="restockTabContent" role="tabpanel" aria-labelledby="restockTab">
-                      <div class="d-flex flex-column h-100">
-                        <h5 class="mb-3 text-body-highlight">Add to Stock</h5>
-                        <div class="row g-3 flex-1 mb-4">
-                          <div class="col-sm-7"><input class="form-control" type="number" placeholder="Quantity" /></div>
-                          <div class="col-sm"><button class="btn btn-primary" type="button"><span class="fa-solid fa-check me-1 fs-10"></span>Confirm</button></div>
-                        </div>
-                        <table>
-                          <thead>
-                            <tr>
-                              <th style="width: 200px;"></th>
-                              <th></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr>
-                              <td class="text-body-highlight fw-bold py-1">Product in stock now:</td>
-                              <td class="text-body-tertiary fw-semibold py-1">$1,090<button class="btn p-0" type="button"><span class="fa-solid fa-rotate text-body ms-1" style="--phoenix-text-opacity: .6;"></span></button></td>
-                            </tr>
-                            <tr>
-                              <td class="text-body-highlight fw-bold py-1">Product in transit:</td>
-                              <td class="text-body-tertiary fw-semibold py-1">5000</td>
-                            </tr>
-                            <tr>
-                              <td class="text-body-highlight fw-bold py-1">Last time restocked:</td>
-                              <td class="text-body-tertiary fw-semibold py-1">30th June, 2021</td>
-                            </tr>
-                            <tr>
-                              <td class="text-body-highlight fw-bold py-1">Total stock over lifetime:</td>
-                              <td class="text-body-tertiary fw-semibold py-1">20,000</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                    <div class="tab-pane fade h-100" id="shippingTabContent" role="tabpanel" aria-labelledby="shippingTab">
-                      <div class="d-flex flex-column h-100">
-                        <h5 class="mb-3 text-body-highlight">Shipping Type</h5>
-                        <div class="flex-1">
-                          <div class="mb-4">
-                            <div class="form-check mb-1"><input class="form-check-input" type="radio" name="shippingRadio" id="fullfilledBySeller" /><label class="form-check-label fs-8 text-body" for="fullfilledBySeller">Fullfilled by Seller</label></div>
-                            <div class="ps-4">
-                              <p class="text-body-secondary fs-9 mb-0">You’ll be responsible for product delivery. <br />Any damage or delay during shipping may cost you a Damage fee.</p>
-                            </div>
-                          </div>
-                          <div class="mb-4">
-                            <div class="form-check mb-1"><input class="form-check-input" type="radio" name="shippingRadio" id="fullfilledByPhoenix" checked="checked" /><label class="form-check-label fs-8 text-body d-flex align-items-center" for="fullfilledByPhoenix">Fullfilled by Phoenix <span class="badge badge-phoenix badge-phoenix-warning fs-10 ms-2">Recommended</span></label></div>
-                            <div class="ps-4">
-                              <p class="text-body-secondary fs-9 mb-0">Your product, Our responsibility.<br />For a measly fee, we will handle the delivery process for you.</p>
-                            </div>
-                          </div>
-                        </div>
-                        <p class="fs-9 fw-semibold mb-0">See our <a class="fw-bold" href="#!">Delivery terms and conditions </a>for details.</p>
-                      </div>
-                    </div>
-                    <div class="tab-pane fade" id="productsTabContent" role="tabpanel" aria-labelledby="productsTab">
-                      <h5 class="mb-3 text-body-highlight">Global Delivery</h5>
-                      <div class="mb-3">
-                        <div class="form-check"><input class="form-check-input" type="radio" name="deliveryRadio" id="worldwideDelivery" /><label class="form-check-label fs-8 text-body" for="worldwideDelivery">Worldwide delivery</label></div>
-                        <div class="ps-4">
-                          <p class="fs-9 mb-0 text-body-secondary">Only available with Shipping method: <a href="#!">Fullfilled by Phoenix</a></p>
-                        </div>
-                      </div>
-                      <div class="mb-3">
-                        <div class="form-check"><input class="form-check-input" type="radio" name="deliveryRadio" checked="checked" id="selectedCountry" /><label class="form-check-label fs-8 text-body" for="selectedCountry">Selected Countries</label></div>
-                        <div class="ps-4" style="max-width: 350px;"><select class="form-select ps-4" id="organizerMultiple" data-choices="data-choices" multiple="multiple" data-options='{"removeItemButton":true,"placeholder":true}'>
-                            <option value="">Type Country name</option>
-                            <option>United States of America</option>
-                            <option>United Kingdom</option>
-                            <option>Canada</option>
-                            <option>Mexico</option>
-                          </select></div>
-                      </div>
-                      <div>
-                        <div class="form-check"><input class="form-check-input" type="radio" name="deliveryRadio" id="localDelivery" /><label class="form-check-label fs-8 text-body" for="localDelivery">Local delivery</label></div>
-                        <p class="fs-9 ms-4 mb-0 text-body-secondary">Deliver to your country of residence <a href="#!">Change profile address </a></p>
-                      </div>
-                    </div>
-                    <div class="tab-pane fade" id="attributesTabContent" role="tabpanel" aria-labelledby="attributesTab">
-                      <h5 class="mb-3 text-body-highlight">Attributes</h5>
-                      <div class="form-check"><input class="form-check-input" id="fragileCheck" type="checkbox" /><label class="form-check-label text-body fs-8" for="fragileCheck">Fragile Product</label></div>
-                      <div class="form-check"><input class="form-check-input" id="biodegradableCheck" type="checkbox" /><label class="form-check-label text-body fs-8" for="biodegradableCheck">Biodegradable</label></div>
-                      <div class="mb-3">
-                        <div class="form-check"><input class="form-check-input" id="frozenCheck" type="checkbox" checked="checked" /><label class="form-check-label text-body fs-8" for="frozenCheck">Frozen Product</label><input class="form-control" type="text" placeholder="Max. allowed Temperature" style="max-width: 350px;" /></div>
-                      </div>
-                      <div class="form-check"><input class="form-check-input" id="productCheck" type="checkbox" checked="checked" /><label class="form-check-label text-body fs-8" for="productCheck">Expiry Date of Product</label><input class="form-control inventory-attributes datetimepicker" id="inventory" type="text" style="max-width: 350px;" placeholder="d/m/y" data-options='{"disableMobile":true}' /></div>
-                    </div>
-                    <div class="tab-pane fade" id="advancedTabContent" role="tabpanel" aria-labelledby="advancedTab">
-                      <h5 class="mb-3 text-body-highlight">Advanced</h5>
-                      <div class="row g-3">
-                        <div class="col-12 col-lg-6">
-                          <h5 class="mb-2 text-body-highlight">Product ID Type</h5><select class="form-select" aria-label="form-select-lg example">
-                            <option selected="selected">ISBN</option>
-                            <option value="1">UPC</option>
-                            <option value="2">EAN</option>
-                            <option value="3">JAN</option>
-                          </select>
-                        </div>
-                        <div class="col-12 col-lg-6">
-                          <h5 class="mb-2 text-body-highlight">Product ID</h5><input class="form-control" type="text" placeholder="ISBN Number" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-xl-4">
-              <div class="row g-2">
-                <div class="col-12 col-xl-12">
-                  <div class="card mb-3">
-                    <div class="card-body">
-                      <h4 class="card-title mb-4">Organize</h4>
-                      <div class="row gx-3">
-                        <div class="col-12 col-sm-6 col-xl-12">
-                          <div class="mb-4">
-                            <div class="d-flex flex-wrap flex-between-center mb-2">
-                              <h5 class="mb-0 text-body-highlight me-2">Category</h5><a class="fw-bold fs-9" href="#!">Add new category</a>
-                            </div><select class="form-select mb-3" aria-label="category">
-                              <option value="men-cloth">Men's Clothing</option>
-                              <option value="women-cloth">Womens's Clothing</option>
-                              <option value="kid-cloth">Kid's Clothing</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-xl-12">
-                          <div class="mb-4">
-                            <div class="d-flex flex-wrap flex-between-center mb-2">
-                              <h5 class="mb-0 text-body-highlight me-2">Vendor</h5><a class="fw-bold fs-9" href="#!">Add new vendor</a>
-                            </div><select class="form-select mb-3" aria-label="category">
-                              <option value="men-cloth">Men's Clothing</option>
-                              <option value="women-cloth">Womens's Clothing</option>
-                              <option value="kid-cloth">Kid's Clothing</option>
-                            </select>
-                          </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-xl-12">
-                          <div class="mb-4">
-                            <div class="d-flex flex-wrap mb-2 flex-between-center">
-                              <h5 class="mb-2 text-body-highlight">Collection</h5><a class="fw-bold fs-9" href="#!">Add new collection</a>
-                            </div><input class="form-control mb-xl-3" type="text" placeholder="Collection" />
-                          </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-xl-12">
-                          <div class="d-flex flex-wrap flex-between-center mb-2">
-                            <h5 class="mb-0 text-body-highlight me-2">Tags</h5><a class="fw-bold fs-9 lh-sm" href="#!">View all tags</a>
-                          </div><select class="form-select" aria-label="category">
-                            <option value="men-cloth">Men's Clothing</option>
-                            <option value="women-cloth">Womens's Clothing</option>
-                            <option value="kid-cloth">Kid's Clothing</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-12 col-xl-12">
-                  <div class="card">
-                    <div class="card-body">
-                      <h4 class="card-title mb-4">Variants</h4>
-                      <div class="row g-3">
-                        <div class="col-12 col-sm-6 col-xl-12">
-                          <div class="border-bottom border-translucent border-dashed border-sm-0 border-bottom-xl pb-4">
-                            <div class="d-flex flex-wrap flex-between-center mb-2">
-                              <h5 class="text-body-highlight me-2">Option 1</h5><a class="fw-bold fs-9" href="#!">Remove</a>
-                            </div><select class="form-select mb-3">
-                              <option value="size">Size</option>
-                              <option value="color">Color</option>
-                              <option value="weight">Weight</option>
-                              <option value="smell">Smell</option>
-                            </select>
-                            <div class="product-variant-select-menu"><select class="form-select mb-3" data-choices="data-choices" multiple="multiple" data-options='{"removeItemButton":true,"placeholder":true}'>
-                                <option value="size">4x6 in</option>
-                                <option value="color">9x6 in</option>
-                                <option value="weight">11x8 in</option>
-                              </select></div>
-                          </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-xl-12">
-                          <div class="d-flex flex-wrap flex-between-center mb-2">
-                            <h5 class="text-body-highlight me-2">Option 2</h5><a class="fw-bold fs-9" href="#!">Remove</a>
-                          </div><select class="form-select mb-3">
-                            <option value="size">Size</option>
-                            <option value="color">Color</option>
-                            <option value="weight">Weight</option>
-                            <option value="smell">Smell</option>
-                          </select>
-                          <div class="product-variant-select-menu mb-3"><select class="form-select mb-3" data-choices="data-choices" multiple="multiple" data-options='{"removeItemButton":true,"placeholder":true}'>
-                              <option value="size">4x6 in</option>
-                              <option value="color">9x6 in</option>
-                              <option value="weight">11x8 in</option>
-                            </select></div>
-                        </div>
-                      </div><button class="btn btn-phoenix-primary w-100" type="button">Add another option</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
-        <footer class="footer position-absolute">
-          <div class="row g-0 justify-content-between align-items-center h-100">
-            <div class="col-12 col-sm-auto text-center">
-              <p class="mb-0 mt-2 mt-sm-0 text-body">Thank you for creating with Phoenix<span class="d-none d-sm-inline-block"></span><span class="d-none d-sm-inline-block mx-1">|</span><br class="d-sm-none" />2025 &copy;<a class="mx-1" href="https://themewagon.com/">Themewagon</a></p>
-            </div>
-            <div class="col-12 col-sm-auto text-center">
-              <p class="mb-0 text-body-tertiary text-opacity-85">v1.24.0</p>
-            </div>
-          </div>
-        </footer>
-      </div>
-      <div class="modal fade" id="searchBoxModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="true" data-phoenix-modal="data-phoenix-modal" style="--phoenix-backdrop-opacity: 1;">
-        <div class="modal-dialog">
-          <div class="modal-content mt-15 rounded-pill">
-            <div class="modal-body p-0">
-              <div class="search-box navbar-top-search-box" data-list='{"valueNames":["title"]}' style="width: auto;">
-                <form class="position-relative" data-bs-toggle="search" data-bs-display="static"><input class="form-control search-input fuzzy-search rounded-pill form-control-lg" type="search" placeholder="Search..." aria-label="Search" />
-                  <span class="fas fa-search search-box-icon"></span>
-                </form>
-                <div class="btn-close position-absolute end-0 top-50 translate-middle cursor-pointer shadow-none" data-bs-dismiss="search"><button class="btn btn-link p-0" aria-label="Close"></button></div>
-                <div class="dropdown-menu border start-0 py-0 overflow-hidden w-100">
-                  <div class="scrollbar-overlay" style="max-height: 30rem;">
-                    <div class="list pb-3">
-                      <h6 class="dropdown-header text-body-highlight fs-10 py-2">24 <span class="text-body-quaternary">results</span></h6>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Recently Searched </h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-clock-rotate-left" data-fa-transform="shrink-2"></span> Store Macbook</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-clock-rotate-left" data-fa-transform="shrink-2"></span> MacBook Air - 13″</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Products</h6>
-                      <div class="py-2"><a class="dropdown-item py-2 d-flex align-items-center" href="../landing/product-details">
-                          <div class="file-thumbnail me-2"><img class="h-100 w-100 object-fit-cover rounded-3" src="/assets/img/products/60x60/3.png" alt="" /></div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">MacBook Air - 13″</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary"><span class="fw-medium text-body-tertiary text-opactity-85">8GB Memory - 1.6GHz - 128GB Storage</span></p>
-                          </div>
-                        </a>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="../landing/product-details">
-                          <div class="file-thumbnail me-2"><img class="img-fluid" src="/assets/img/products/60x60/3.png" alt="" /></div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">MacBook Pro - 13″</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary"><span class="fw-medium text-body-tertiary text-opactity-85">30 Sep at 12:30 PM</span></p>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Quick Links</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-link text-body" data-fa-transform="shrink-2"></span> Support MacBook House</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-link text-body" data-fa-transform="shrink-2"></span> Store MacBook″</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Files</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-file-zipper text-body" data-fa-transform="shrink-2"></span> Library MacBook folder.rar</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-file-lines text-body" data-fa-transform="shrink-2"></span> Feature MacBook extensions.txt</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-image text-body" data-fa-transform="shrink-2"></span> MacBook Pro_13.jpg</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Members</h6>
-                      <div class="py-2"><a class="dropdown-item py-2 d-flex align-items-center" href="/members">
-                          <div class="avatar avatar-l status-online  me-2 text-body">
-                            <img class="rounded-circle " src="/assets/img/team/40x40/10.webp" alt="" />
-                          </div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">Carry Anna</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary">anna@technext.it</p>
-                          </div>
-                        </a>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="/members">
-                          <div class="avatar avatar-l  me-2 text-body">
-                            <img class="rounded-circle " src="/assets/img/team/40x40/12.webp" alt="" />
-                          </div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">John Smith</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary">smith@technext.it</p>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Related Searches</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-brands fa-firefox-browser text-body" data-fa-transform="shrink-2"></span> Search in the Web MacBook</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-brands fa-chrome text-body" data-fa-transform="shrink-2"></span> Store MacBook″</div>
-                          </div>
-                        </a>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <p class="fallback fw-bold fs-7 d-none">No Result Found.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>`;
+import { petCategories, petBrands, petTypes } from './petShopData';
 
 export default function AddProduct() {
   usePhoenixInit();
 
-  useEffect(() => {
-    if (window.feather) window.feather.replace();
-  }, []);
+  const [activeTab, setActiveTab] = useState('pricing');
+  const [formData, setFormData] = useState({
+    title: '', description: '', regularPrice: '', salePrice: '',
+    restockQty: '', sku: '',
+    shippingType: 'petshop',
+    deliveryType: 'selected',
+    fragile: false, perishable: false, liveAnimal: false, tempSensitive: false, hasExpiry: false,
+    expiryDate: '',
+    idType: 'SKU', productId: '',
+    category: 'Pet Food', brand: 'Royal Canin', petType: 'Dog',
+    collection: '', tags: '',
+  });
+  const [variants, setVariants] = useState([
+    { optionType: 'Size', values: ['Small', 'Medium', 'Large'] },
+  ]);
 
-  return <div dangerouslySetInnerHTML={{ __html: pageHtml }} style={{ display: "contents" }} />;
+  useEffect(() => { if (window.feather) window.feather.replace(); });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const addVariant = () => {
+    setVariants(prev => [...prev, { optionType: 'Size', values: [] }]);
+  };
+
+  const removeVariant = (idx) => {
+    setVariants(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const tabs = [
+    { key: 'pricing', label: 'Pricing', icon: 'tag' },
+    { key: 'restock', label: 'Restock', icon: 'package' },
+    { key: 'shipping', label: 'Shipping', icon: 'truck' },
+    { key: 'delivery', label: 'Delivery', icon: 'globe' },
+    { key: 'attributes', label: 'Attributes', icon: 'sliders' },
+    { key: 'advanced', label: 'Advanced', icon: 'lock' },
+  ];
+
+  return (
+    <>
+      <nav className="mb-3" aria-label="breadcrumb">
+        <ol className="breadcrumb mb-0">
+          <li className="breadcrumb-item"><a href="/">Pet Shop</a></li>
+          <li className="breadcrumb-item"><a href="/pet-shop/products">Products</a></li>
+          <li className="breadcrumb-item active">Add product</li>
+        </ol>
+      </nav>
+
+      <form className="mb-9" onSubmit={(e) => e.preventDefault()}>
+        <div className="row g-3 flex-between-end mb-5">
+          <div className="col-auto">
+            <h2 className="mb-2">Add a product</h2>
+            <h5 className="text-body-tertiary fw-semibold">Add new pet products to your store inventory</h5>
+          </div>
+          <div className="col-auto">
+            <button className="btn btn-phoenix-secondary me-2 mb-2 mb-sm-0" type="button">Discard</button>
+            <button className="btn btn-phoenix-primary me-2 mb-2 mb-sm-0" type="button">Save draft</button>
+            <button className="btn btn-primary mb-2 mb-sm-0" type="submit">Publish product</button>
+          </div>
+        </div>
+
+        <div className="row g-5">
+          {/* Left Column */}
+          <div className="col-12 col-xl-8">
+            <h4 className="mb-3">Product Title</h4>
+            <input className="form-control mb-5" type="text" name="title" value={formData.title}
+              onChange={handleChange} placeholder="e.g. Royal Canin Medium Adult Dry Dog Food" />
+
+            <div className="mb-6">
+              <h4 className="mb-3">Product Description</h4>
+              <textarea className="form-control" rows="6" name="description" value={formData.description}
+                onChange={handleChange}
+                placeholder="Describe the product features, ingredients, suitability for pet types, sizes available..." />
+            </div>
+
+            <h4 className="mb-3">Display images</h4>
+            <div className="border border-dashed border-translucent rounded-3 p-5 mb-5 text-center bg-body-emphasis">
+              <div className="text-body-tertiary text-opacity-85">
+                Drag your photos here <span className="text-body-secondary px-1">or</span>
+                <button className="btn btn-link p-0" type="button">Browse from device</button>
+                <br />
+                <span className="fas fa-image mt-3 fs-5 text-body-quaternary"></span>
+              </div>
+            </div>
+
+            <h4 className="mb-3">Inventory</h4>
+            <div className="row g-0 border-top border-bottom">
+              {/* Tab Navigation */}
+              <div className="col-sm-4">
+                <div className="nav flex-sm-column border-bottom border-bottom-sm-0 border-end-sm fs-9 h-100 justify-content-between"
+                  role="tablist" aria-orientation="vertical">
+                  {tabs.map(tab => (
+                    <a key={tab.key}
+                      className={`nav-link border-end border-end-sm-0 border-bottom-sm text-center text-sm-start cursor-pointer outline-none d-sm-flex align-items-sm-center ${activeTab === tab.key ? 'active' : ''}`}
+                      onClick={() => setActiveTab(tab.key)} role="tab">
+                      <span className="me-sm-2 fs-4 nav-icons" data-feather={tab.icon}></span>
+                      <span className="d-none d-sm-inline">{tab.label}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tab Content */}
+              <div className="col-sm-8">
+                <div className="py-3 ps-sm-4 h-100">
+                  {/* Pricing Tab */}
+                  {activeTab === 'pricing' && (
+                    <div>
+                      <h4 className="mb-3 d-sm-none">Pricing</h4>
+                      <div className="row g-3">
+                        <div className="col-12 col-lg-6">
+                          <h5 className="mb-2 text-body-highlight">Regular price</h5>
+                          <input className="form-control" type="text" name="regularPrice"
+                            value={formData.regularPrice} onChange={handleChange} placeholder="₹ 0.00" />
+                        </div>
+                        <div className="col-12 col-lg-6">
+                          <h5 className="mb-2 text-body-highlight">Sale price</h5>
+                          <input className="form-control" type="text" name="salePrice"
+                            value={formData.salePrice} onChange={handleChange} placeholder="₹ 0.00" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Restock Tab */}
+                  {activeTab === 'restock' && (
+                    <div className="d-flex flex-column h-100">
+                      <h5 className="mb-3 text-body-highlight">Add to Stock</h5>
+                      <div className="row g-3 flex-1 mb-4">
+                        <div className="col-sm-7">
+                          <input className="form-control" type="number" name="restockQty"
+                            value={formData.restockQty} onChange={handleChange} placeholder="Quantity" />
+                        </div>
+                        <div className="col-sm">
+                          <button className="btn btn-primary" type="button">
+                            <span className="fa-solid fa-check me-1 fs-10"></span>Confirm
+                          </button>
+                        </div>
+                      </div>
+                      <table>
+                        <tbody>
+                          <tr>
+                            <td className="text-body-highlight fw-bold py-1" style={{width: 200}}>Product in stock now:</td>
+                            <td className="text-body-tertiary fw-semibold py-1">142 units</td>
+                          </tr>
+                          <tr>
+                            <td className="text-body-highlight fw-bold py-1">Product in transit:</td>
+                            <td className="text-body-tertiary fw-semibold py-1">50 units</td>
+                          </tr>
+                          <tr>
+                            <td className="text-body-highlight fw-bold py-1">Last time restocked:</td>
+                            <td className="text-body-tertiary fw-semibold py-1">April 15, 2025</td>
+                          </tr>
+                          <tr>
+                            <td className="text-body-highlight fw-bold py-1">Total stock over lifetime:</td>
+                            <td className="text-body-tertiary fw-semibold py-1">2,450 units</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Shipping Tab */}
+                  {activeTab === 'shipping' && (
+                    <div className="d-flex flex-column h-100">
+                      <h5 className="mb-3 text-body-highlight">Shipping Type</h5>
+                      <div className="flex-1">
+                        <div className="mb-4">
+                          <div className="form-check mb-1">
+                            <input className="form-check-input" type="radio" name="shippingType"
+                              id="selfShipping" value="self" checked={formData.shippingType === 'self'}
+                              onChange={handleChange} />
+                            <label className="form-check-label fs-8 text-body" htmlFor="selfShipping">Fulfilled by Seller</label>
+                          </div>
+                          <div className="ps-4">
+                            <p className="text-body-secondary fs-9 mb-0">You'll be responsible for product delivery.<br />
+                            Special care needed for perishable items and live animal products.</p>
+                          </div>
+                        </div>
+                        <div className="mb-4">
+                          <div className="form-check mb-1">
+                            <input className="form-check-input" type="radio" name="shippingType"
+                              id="petshopShipping" value="petshop" checked={formData.shippingType === 'petshop'}
+                              onChange={handleChange} />
+                            <label className="form-check-label fs-8 text-body d-flex align-items-center" htmlFor="petshopShipping">
+                              Fulfilled by Pet Shop <span className="badge badge-phoenix badge-phoenix-warning fs-10 ms-2">Recommended</span>
+                            </label>
+                          </div>
+                          <div className="ps-4">
+                            <p className="text-body-secondary fs-9 mb-0">Your product, our responsibility.<br />
+                            Temperature-controlled shipping for sensitive items. Live animal shipping available.</p>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="fs-9 fw-semibold mb-0">See our <a className="fw-bold" href="#!">Pet delivery terms and conditions</a> for details.</p>
+                    </div>
+                  )}
+
+                  {/* Global Delivery Tab */}
+                  {activeTab === 'delivery' && (
+                    <div>
+                      <h5 className="mb-3 text-body-highlight">Delivery Options</h5>
+                      <div className="mb-3">
+                        <div className="form-check">
+                          <input className="form-check-input" type="radio" name="deliveryType"
+                            id="nationwide" value="nationwide" checked={formData.deliveryType === 'nationwide'}
+                            onChange={handleChange} />
+                          <label className="form-check-label fs-8 text-body" htmlFor="nationwide">Nationwide delivery</label>
+                        </div>
+                        <div className="ps-4">
+                          <p className="fs-9 mb-0 text-body-secondary">Available across all major cities in India</p>
+                        </div>
+                      </div>
+                      <div className="mb-3">
+                        <div className="form-check">
+                          <input className="form-check-input" type="radio" name="deliveryType"
+                            id="selectedCities" value="selected" checked={formData.deliveryType === 'selected'}
+                            onChange={handleChange} />
+                          <label className="form-check-label fs-8 text-body" htmlFor="selectedCities">Selected Cities</label>
+                        </div>
+                        <div className="ps-4" style={{maxWidth: 350}}>
+                          <select className="form-select" multiple>
+                            <option>Chennai</option>
+                            <option>Mumbai</option>
+                            <option>Delhi</option>
+                            <option>Bangalore</option>
+                            <option>Hyderabad</option>
+                            <option>Pune</option>
+                            <option>Kolkata</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="form-check">
+                          <input className="form-check-input" type="radio" name="deliveryType"
+                            id="localOnly" value="local" checked={formData.deliveryType === 'local'}
+                            onChange={handleChange} />
+                          <label className="form-check-label fs-8 text-body" htmlFor="localOnly">Local delivery only</label>
+                        </div>
+                        <p className="fs-9 ms-4 mb-0 text-body-secondary">Deliver within your city only</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Attributes Tab */}
+                  {activeTab === 'attributes' && (
+                    <div>
+                      <h5 className="mb-3 text-body-highlight">Product Attributes</h5>
+                      <div className="form-check mb-2">
+                        <input className="form-check-input" id="fragileCheck" type="checkbox"
+                          name="fragile" checked={formData.fragile} onChange={handleChange} />
+                        <label className="form-check-label text-body fs-8" htmlFor="fragileCheck">Fragile Product</label>
+                      </div>
+                      <div className="form-check mb-2">
+                        <input className="form-check-input" id="perishableCheck" type="checkbox"
+                          name="perishable" checked={formData.perishable} onChange={handleChange} />
+                        <label className="form-check-label text-body fs-8" htmlFor="perishableCheck">Perishable Item</label>
+                      </div>
+                      <div className="form-check mb-2">
+                        <input className="form-check-input" id="liveAnimalCheck" type="checkbox"
+                          name="liveAnimal" checked={formData.liveAnimal} onChange={handleChange} />
+                        <label className="form-check-label text-body fs-8" htmlFor="liveAnimalCheck">Live Animal Product</label>
+                      </div>
+                      <div className="mb-3">
+                        <div className="form-check mb-2">
+                          <input className="form-check-input" id="tempCheck" type="checkbox"
+                            name="tempSensitive" checked={formData.tempSensitive} onChange={handleChange} />
+                          <label className="form-check-label text-body fs-8" htmlFor="tempCheck">Temperature Sensitive</label>
+                        </div>
+                        {formData.tempSensitive && (
+                          <input className="form-control ms-4" type="text" placeholder="Max. allowed Temperature (°C)"
+                            style={{maxWidth: 350}} />
+                        )}
+                      </div>
+                      <div>
+                        <div className="form-check mb-2">
+                          <input className="form-check-input" id="expiryCheck" type="checkbox"
+                            name="hasExpiry" checked={formData.hasExpiry} onChange={handleChange} />
+                          <label className="form-check-label text-body fs-8" htmlFor="expiryCheck">Has Expiry Date</label>
+                        </div>
+                        {formData.hasExpiry && (
+                          <input className="form-control ms-4" type="date" name="expiryDate"
+                            value={formData.expiryDate} onChange={handleChange} style={{maxWidth: 350}} />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Advanced Tab */}
+                  {activeTab === 'advanced' && (
+                    <div>
+                      <h5 className="mb-3 text-body-highlight">Advanced</h5>
+                      <div className="row g-3">
+                        <div className="col-12 col-lg-6">
+                          <h5 className="mb-2 text-body-highlight">Product ID Type</h5>
+                          <select className="form-select" name="idType" value={formData.idType} onChange={handleChange}>
+                            <option value="SKU">SKU</option>
+                            <option value="UPC">UPC</option>
+                            <option value="EAN">EAN</option>
+                            <option value="CUSTOM">Custom</option>
+                          </select>
+                        </div>
+                        <div className="col-12 col-lg-6">
+                          <h5 className="mb-2 text-body-highlight">Product ID</h5>
+                          <input className="form-control" type="text" name="productId"
+                            value={formData.productId} onChange={handleChange} placeholder="e.g. RC-MDA-15K" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="col-12 col-xl-4">
+            <div className="row g-2">
+              {/* Organize Card */}
+              <div className="col-12 col-xl-12">
+                <div className="card mb-3">
+                  <div className="card-body">
+                    <h4 className="card-title mb-4">Organize</h4>
+                    <div className="row gx-3">
+                      <div className="col-12 col-sm-6 col-xl-12">
+                        <div className="mb-4">
+                          <div className="d-flex flex-wrap flex-between-center mb-2">
+                            <h5 className="mb-0 text-body-highlight me-2">Category</h5>
+                            <a className="fw-bold fs-9" href="#!">Add new category</a>
+                          </div>
+                          <select className="form-select mb-3" name="category" value={formData.category} onChange={handleChange}>
+                            {petCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="col-12 col-sm-6 col-xl-12">
+                        <div className="mb-4">
+                          <div className="d-flex flex-wrap flex-between-center mb-2">
+                            <h5 className="mb-0 text-body-highlight me-2">Brand</h5>
+                            <a className="fw-bold fs-9" href="#!">Add new brand</a>
+                          </div>
+                          <select className="form-select mb-3" name="brand" value={formData.brand} onChange={handleChange}>
+                            {petBrands.map(br => <option key={br} value={br}>{br}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="col-12 col-sm-6 col-xl-12">
+                        <div className="mb-4">
+                          <div className="d-flex flex-wrap flex-between-center mb-2">
+                            <h5 className="mb-0 text-body-highlight me-2">Pet Type</h5>
+                          </div>
+                          <select className="form-select mb-3" name="petType" value={formData.petType} onChange={handleChange}>
+                            {petTypes.map(pt => <option key={pt} value={pt}>{pt}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="col-12 col-sm-6 col-xl-12">
+                        <div className="mb-4">
+                          <div className="d-flex flex-wrap mb-2 flex-between-center">
+                            <h5 className="mb-2 text-body-highlight">Collection</h5>
+                            <a className="fw-bold fs-9" href="#!">Add new collection</a>
+                          </div>
+                          <input className="form-control mb-xl-3" type="text" name="collection"
+                            value={formData.collection} onChange={handleChange} placeholder="e.g. Summer Essentials" />
+                        </div>
+                      </div>
+                      <div className="col-12 col-sm-6 col-xl-12">
+                        <div className="d-flex flex-wrap flex-between-center mb-2">
+                          <h5 className="mb-0 text-body-highlight me-2">Tags</h5>
+                          <a className="fw-bold fs-9 lh-sm" href="#!">View all tags</a>
+                        </div>
+                        <select className="form-select" name="tags" value={formData.tags} onChange={handleChange}>
+                          <option value="">Select tags...</option>
+                          <option value="puppy">Puppy</option>
+                          <option value="adult">Adult</option>
+                          <option value="senior">Senior</option>
+                          <option value="organic">Organic</option>
+                          <option value="grain-free">Grain Free</option>
+                          <option value="premium">Premium</option>
+                          <option value="bestseller">Bestseller</option>
+                          <option value="new-arrival">New Arrival</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Variants Card */}
+              <div className="col-12 col-xl-12">
+                <div className="card">
+                  <div className="card-body">
+                    <h4 className="card-title mb-4">Variants</h4>
+                    <div className="row g-3">
+                      {variants.map((variant, idx) => (
+                        <div key={idx} className="col-12 col-sm-6 col-xl-12">
+                          <div className={idx < variants.length - 1 ? 'border-bottom border-translucent border-dashed pb-4' : ''}>
+                            <div className="d-flex flex-wrap flex-between-center mb-2">
+                              <h5 className="text-body-highlight me-2">Option {idx + 1}</h5>
+                              <a className="fw-bold fs-9" href="#!" onClick={(e) => { e.preventDefault(); removeVariant(idx); }}>Remove</a>
+                            </div>
+                            <select className="form-select mb-3" value={variant.optionType}
+                              onChange={(e) => {
+                                const updated = [...variants];
+                                updated[idx].optionType = e.target.value;
+                                setVariants(updated);
+                              }}>
+                              <option value="Size">Size</option>
+                              <option value="Weight">Weight</option>
+                              <option value="Flavor">Flavor</option>
+                              <option value="Color">Color</option>
+                              <option value="Age Group">Age Group</option>
+                            </select>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="btn btn-phoenix-primary w-100 mt-3" type="button" onClick={addVariant}>
+                      Add another option
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </>
+  );
 }

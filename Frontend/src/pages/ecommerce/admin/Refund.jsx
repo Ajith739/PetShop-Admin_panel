@@ -1,297 +1,260 @@
-import { useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import usePhoenixInit from '../../../hooks/usePhoenixInit';
+import { refundsData, formatCurrency, getStatusBadgeClass } from './petShopData';
 
-const pageHtml = `<nav class="mb-3" aria-label="breadcrumb">
-          <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="#!">Page 1</a></li>
-            <li class="breadcrumb-item"><a href="#!">Page 2</a></li>
-            <li class="breadcrumb-item active">Default</li>
-          </ol>
-        </nav>
-        <div class="mb-9">
-          <h2 class="mb-2">Refund</h2>
-          <div class="row align-items-center mb-3 gx-3 gy-2">
-            <div class="col-12 col-sm-auto">
-              <p class="text-body-secondary lh-sm mb-0">Order : <a class="fw-bold ms-1" href="#!">#349</a></p>
-            </div>
-            <div class="col-12 col-sm-auto flex-grow-1">
-              <div class="row align-items-center flex-wrap gy-1">
-                <div class="col-auto flex-grow-1">
-                  <p class="text-body-secondary lh-sm mb-0">Customer ID : <a class="fw-bold ms-1" href="#!">2364847</a></p>
-                </div>
-                <div class="col-auto">
-                  <div class="dropdown"><button class="btn dropdown-toggle dropdown-caret-none px-0 text-body" type="button" data-bs-toggle="dropdown" aria-expanded="false">More action<span class="fas fa-chevron-down ms-2 fs-10"></span></button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                      <li><a class="dropdown-item" href="#">Action</a></li>
-                      <li><a class="dropdown-item" href="#">Another action</a></li>
-                      <li><a class="dropdown-item" href="#">Something else here</a></li>
-                      <li><a class="dropdown-item" href="#">Cancel</a></li>
-                    </ul>
+export default function Refund() {
+  usePhoenixInit();
+
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [selectedRows, setSelectedRows] = useState(new Set());
+
+  useEffect(() => { if (window.feather) window.feather.replace(); });
+
+  const statuses = ['Pending', 'Approved', 'Processing', 'Rejected'];
+
+  const filtered = useMemo(() => {
+    return refundsData.filter(r => {
+      const matchSearch = !search ||
+        r.id.toLowerCase().includes(search.toLowerCase()) ||
+        r.orderId.toLowerCase().includes(search.toLowerCase()) ||
+        r.customer.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = !statusFilter || r.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
+  }, [search, statusFilter]);
+
+  const statusCounts = {
+    all: refundsData.length,
+    Pending: refundsData.filter(r => r.status === 'Pending').length,
+    Approved: refundsData.filter(r => r.status === 'Approved').length,
+    Processing: refundsData.filter(r => r.status === 'Processing').length,
+    Rejected: refundsData.filter(r => r.status === 'Rejected').length,
+  };
+
+  const totalRefundAmount = refundsData.reduce((sum, r) => sum + r.amount, 0);
+  const pendingAmount = refundsData.filter(r => r.status === 'Pending').reduce((sum, r) => sum + r.amount, 0);
+  const approvedAmount = refundsData.filter(r => r.status === 'Approved' || r.status === 'Processing').reduce((sum, r) => sum + r.amount, 0);
+
+  const toggleRow = (id) => {
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedRows.size === filtered.length) setSelectedRows(new Set());
+    else setSelectedRows(new Set(filtered.map(r => r.id)));
+  };
+
+  const getStatusIcon = (status) => {
+    const map = { Pending: 'clock', Approved: 'check', Processing: 'loader', Rejected: 'x' };
+    return map[status] || 'help-circle';
+  };
+
+  return (
+    <>
+      <nav className="mb-3" aria-label="breadcrumb">
+        <ol className="breadcrumb mb-0">
+          <li className="breadcrumb-item"><a href="/">Pet Shop</a></li>
+          <li className="breadcrumb-item"><a href="/pet-shop/orders">Orders</a></li>
+          <li className="breadcrumb-item active">Refund</li>
+        </ol>
+      </nav>
+
+      <div className="mb-9">
+        <div className="row g-3 mb-4">
+          <div className="col-auto">
+            <h2 className="mb-0">Refund Requests</h2>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="row g-3 mb-4">
+          <div className="col-sm-6 col-xl-3">
+            <div className="card">
+              <div className="card-body">
+                <div className="d-flex align-items-center">
+                  <div className="avatar avatar-m me-3">
+                    <div className="avatar-name rounded-circle bg-primary-subtle text-primary">
+                      <span className="fas fa-undo fs-9"></span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-0 text-body-tertiary fs-10 fw-semibold">Total Requests</p>
+                    <h4 className="mb-0 text-body-emphasis">{statusCounts.all}</h4>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="row gx-5">
-            <div class="col-12 col-xl-8 col-xxl-9">
-              <div id="orderTable" data-list='{"valueNames":["products","color","size","price","quantity","total"],"page":10}'>
-                <div class="table-responsive scrollbar">
-                  <table class="table fs-9 mb-0 border-top border-translucent">
-                    <thead>
-                      <tr>
-                        <th class="sort white-space-nowrap align-middle fs-10" scope="col"></th>
-                        <th class="sort white-space-nowrap align-middle" scope="col" style="min-width:400px;" data-sort="products">PRODUCTS</th>
-                        <th class="sort align-middle ps-4" scope="col" data-sort="color" style="width:150px;">COLOR</th>
-                        <th class="sort align-middle ps-4" scope="col" data-sort="size" style="width:300px;">SIZE</th>
-                        <th class="sort align-middle text-end ps-4" scope="col" data-sort="price" style="width:150px;">PRICE</th>
-                        <th class="sort align-middle text-end ps-4" scope="col" data-sort="quantity" style="width:200px;">QUANTITY</th>
-                        <th class="sort align-middle text-end ps-4" scope="col" data-sort="total" style="width:250px;">TOTAL</th>
-                      </tr>
-                    </thead>
-                    <tbody class="list" id="order-table-body">
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/1.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands)</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Pure matte black</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">42</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$57</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">4</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$228</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/2.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">iPhone 13 pro max-Pacific Blue-128GB storage</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Glossy black</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">XL</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$199</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">2</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$398</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/3.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">Apple MacBook Pro 13 inch-M1-8/256GB-space</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Glossy black</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">L</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$600</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">1</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$600</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/4.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">Apple iMac 24&quot; 4K Retina Display M1 8 Core CPU, 7 Core GPU, 256GB SSD, Green (MJV83ZP/A) 2021</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Gray</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">22</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$250</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">2</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$500</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/5.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">Razer Kraken v3 x Wired 7.1 Surroung Sound Gaming headset</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Black</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">L</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$49</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">3</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$147</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/6.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">PlayStation 5 DualSense Wireless Controller</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Green Golden</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">Regular</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$65</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">2</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$130</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div class="d-flex flex-between-center py-3 border-bottom border-translucent mb-6">
-                <p class="text-body-emphasis fw-semibold lh-sm mb-0">Items subtotal :</p>
-                <p class="text-body-emphasis fw-bold lh-sm mb-0">$1690</p>
-              </div>
-            </div>
-            <div class="col-12 col-xl-4 col-xxl-3">
-              <div class="row">
-                <div class="col-12">
-                  <div class="card mb-3">
-                    <div class="card-body">
-                      <h3 class="card-title mb-4">Summary</h3>
-                      <div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Items subtotal :</p>
-                          <p class="text-body-emphasis fw-semibold">$691</p>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Discount :</p>
-                          <p class="text-danger fw-semibold">-$59</p>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Tax :</p>
-                          <p class="text-body-emphasis fw-semibold">$126.20</p>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Subtotal :</p>
-                          <p class="text-body-emphasis fw-semibold">$665</p>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Shipping Cost :</p>
-                          <p class="text-body-emphasis fw-semibold">$30</p>
-                        </div>
-                      </div>
-                      <div class="d-flex justify-content-between border-top border-translucent border-dashed pt-4">
-                        <h4 class="mb-0">Total :</h4>
-                        <h4 class="mb-0">$695.20</h4>
-                      </div>
+          <div className="col-sm-6 col-xl-3">
+            <div className="card">
+              <div className="card-body">
+                <div className="d-flex align-items-center">
+                  <div className="avatar avatar-m me-3">
+                    <div className="avatar-name rounded-circle bg-warning-subtle text-warning">
+                      <span className="fas fa-clock fs-9"></span>
                     </div>
                   </div>
+                  <div>
+                    <p className="mb-0 text-body-tertiary fs-10 fw-semibold">Pending Amount</p>
+                    <h4 className="mb-0 text-body-emphasis">{formatCurrency(pendingAmount)}</h4>
+                  </div>
                 </div>
-                <div class="col-12">
-                  <div class="card">
-                    <div class="card-body">
-                      <h4 class="card-title mb-4">Refund Amount</h4><input class="form-control mb-4" id="refundInput" type="text" placeholder="Amount" /><button class="btn btn-primary w-100">Refund $500</button>
+              </div>
+            </div>
+          </div>
+          <div className="col-sm-6 col-xl-3">
+            <div className="card">
+              <div className="card-body">
+                <div className="d-flex align-items-center">
+                  <div className="avatar avatar-m me-3">
+                    <div className="avatar-name rounded-circle bg-success-subtle text-success">
+                      <span className="fas fa-check fs-9"></span>
                     </div>
+                  </div>
+                  <div>
+                    <p className="mb-0 text-body-tertiary fs-10 fw-semibold">Approved Amount</p>
+                    <h4 className="mb-0 text-body-emphasis">{formatCurrency(approvedAmount)}</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-sm-6 col-xl-3">
+            <div className="card">
+              <div className="card-body">
+                <div className="d-flex align-items-center">
+                  <div className="avatar avatar-m me-3">
+                    <div className="avatar-name rounded-circle bg-info-subtle text-info">
+                      <span className="fas fa-rupee-sign fs-9"></span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-0 text-body-tertiary fs-10 fw-semibold">Total Refund Value</p>
+                    <h4 className="mb-0 text-body-emphasis">{formatCurrency(totalRefundAmount)}</h4>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <footer class="footer position-absolute">
-          <div class="row g-0 justify-content-between align-items-center h-100">
-            <div class="col-12 col-sm-auto text-center">
-              <p class="mb-0 mt-2 mt-sm-0 text-body">Thank you for creating with Phoenix<span class="d-none d-sm-inline-block"></span><span class="d-none d-sm-inline-block mx-1">|</span><br class="d-sm-none" />2025 &copy;<a class="mx-1" href="https://themewagon.com/">Themewagon</a></p>
-            </div>
-            <div class="col-12 col-sm-auto text-center">
-              <p class="mb-0 text-body-tertiary text-opacity-85">v1.24.0</p>
-            </div>
-          </div>
-        </footer>
-      </div>
-      <div class="modal fade" id="searchBoxModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="true" data-phoenix-modal="data-phoenix-modal" style="--phoenix-backdrop-opacity: 1;">
-        <div class="modal-dialog">
-          <div class="modal-content mt-15 rounded-pill">
-            <div class="modal-body p-0">
-              <div class="search-box navbar-top-search-box" data-list='{"valueNames":["title"]}' style="width: auto;">
-                <form class="position-relative" data-bs-toggle="search" data-bs-display="static"><input class="form-control search-input fuzzy-search rounded-pill form-control-lg" type="search" placeholder="Search..." aria-label="Search" />
-                  <span class="fas fa-search search-box-icon"></span>
+
+        {/* Search & Filters */}
+        <div className="mb-4">
+          <div className="row g-3">
+            <div className="col-auto">
+              <div className="search-box">
+                <form className="position-relative">
+                  <input className="form-control search-input search" type="search" placeholder="Search refunds"
+                    value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <span className="fas fa-search search-box-icon"></span>
                 </form>
-                <div class="btn-close position-absolute end-0 top-50 translate-middle cursor-pointer shadow-none" data-bs-dismiss="search"><button class="btn btn-link p-0" aria-label="Close"></button></div>
-                <div class="dropdown-menu border start-0 py-0 overflow-hidden w-100">
-                  <div class="scrollbar-overlay" style="max-height: 30rem;">
-                    <div class="list pb-3">
-                      <h6 class="dropdown-header text-body-highlight fs-10 py-2">24 <span class="text-body-quaternary">results</span></h6>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Recently Searched </h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-clock-rotate-left" data-fa-transform="shrink-2"></span> Store Macbook</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-clock-rotate-left" data-fa-transform="shrink-2"></span> MacBook Air - 13″</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Products</h6>
-                      <div class="py-2"><a class="dropdown-item py-2 d-flex align-items-center" href="../landing/product-details">
-                          <div class="file-thumbnail me-2"><img class="h-100 w-100 object-fit-cover rounded-3" src="/assets/img/products/60x60/3.png" alt="" /></div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">MacBook Air - 13″</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary"><span class="fw-medium text-body-tertiary text-opactity-85">8GB Memory - 1.6GHz - 128GB Storage</span></p>
-                          </div>
-                        </a>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="../landing/product-details">
-                          <div class="file-thumbnail me-2"><img class="img-fluid" src="/assets/img/products/60x60/3.png" alt="" /></div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">MacBook Pro - 13″</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary"><span class="fw-medium text-body-tertiary text-opactity-85">30 Sep at 12:30 PM</span></p>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Quick Links</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-link text-body" data-fa-transform="shrink-2"></span> Support MacBook House</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-link text-body" data-fa-transform="shrink-2"></span> Store MacBook″</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Files</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-file-zipper text-body" data-fa-transform="shrink-2"></span> Library MacBook folder.rar</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-file-lines text-body" data-fa-transform="shrink-2"></span> Feature MacBook extensions.txt</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-image text-body" data-fa-transform="shrink-2"></span> MacBook Pro_13.jpg</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Members</h6>
-                      <div class="py-2"><a class="dropdown-item py-2 d-flex align-items-center" href="/members">
-                          <div class="avatar avatar-l status-online  me-2 text-body">
-                            <img class="rounded-circle " src="/assets/img/team/40x40/10.webp" alt="" />
-                          </div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">Carry Anna</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary">anna@technext.it</p>
-                          </div>
-                        </a>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="/members">
-                          <div class="avatar avatar-l  me-2 text-body">
-                            <img class="rounded-circle " src="/assets/img/team/40x40/12.webp" alt="" />
-                          </div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">John Smith</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary">smith@technext.it</p>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Related Searches</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-brands fa-firefox-browser text-body" data-fa-transform="shrink-2"></span> Search in the Web MacBook</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-brands fa-chrome text-body" data-fa-transform="shrink-2"></span> Store MacBook″</div>
-                          </div>
-                        </a>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <p class="fallback fw-bold fs-7 d-none">No Result Found.</p>
-                    </div>
-                  </div>
+              </div>
+            </div>
+            <div className="col-auto scrollbar overflow-hidden-y flex-grow-1">
+              <div className="btn-group position-static" role="group">
+                <div className="btn-group position-static text-nowrap">
+                  <button className="btn btn-phoenix-secondary px-7 flex-shrink-0" type="button"
+                    data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
+                    {statusFilter || 'Status'}<span className="fas fa-angle-down ms-2"></span>
+                  </button>
+                  <ul className="dropdown-menu">
+                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setStatusFilter(''); }}>All Statuses</a></li>
+                    {statuses.map(s => (
+                      <li key={s}><a className="dropdown-item" href="#"
+                        onClick={(e) => { e.preventDefault(); setStatusFilter(s); }}>{s} ({statusCounts[s]})</a></li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            </div>`;
+            </div>
+            <div className="col-auto">
+              <button className="btn btn-link text-body me-4 px-0">
+                <span className="fa-solid fa-file-export fs-9 me-2"></span>Export
+              </button>
+            </div>
+          </div>
+        </div>
 
-export default function Refund() {
-  usePhoenixInit();
+        {/* Table */}
+        <div className="mx-n4 px-4 mx-lg-n6 px-lg-6 bg-body-emphasis border-top border-bottom border-translucent position-relative top-1">
+          <div className="table-responsive scrollbar mx-n1 px-1">
+            <table className="table table-sm fs-9 mb-0">
+              <thead>
+                <tr>
+                  <th className="white-space-nowrap fs-9 align-middle ps-0" style={{width: 26}}>
+                    <div className="form-check mb-0 fs-8">
+                      <input className="form-check-input" type="checkbox"
+                        checked={selectedRows.size === filtered.length && filtered.length > 0}
+                        onChange={toggleAll} />
+                    </div>
+                  </th>
+                  <th className="sort align-middle pe-3" scope="col" style={{width: '10%'}}>REFUND ID</th>
+                  <th className="sort align-middle pe-3" scope="col" style={{width: '10%'}}>ORDER</th>
+                  <th className="sort align-middle pe-3" scope="col" style={{width: '15%'}}>CUSTOMER</th>
+                  <th className="sort align-middle pe-3" scope="col" style={{width: '18%'}}>ITEM</th>
+                  <th className="sort align-middle text-end" scope="col" style={{width: '10%'}}>AMOUNT</th>
+                  <th className="sort align-middle pe-3" scope="col" style={{width: '18%'}}>REASON</th>
+                  <th className="sort align-middle text-center" scope="col" style={{width: '10%'}}>STATUS</th>
+                  <th className="sort align-middle text-end pe-0" scope="col" style={{width: '12%'}}>DATE</th>
+                </tr>
+              </thead>
+              <tbody className="list">
+                {filtered.map(refund => (
+                  <tr key={refund.id} className="hover-actions-trigger btn-reveal-trigger position-static">
+                    <td className="fs-9 align-middle ps-0 py-3">
+                      <div className="form-check mb-0 fs-8">
+                        <input className="form-check-input" type="checkbox"
+                          checked={selectedRows.has(refund.id)} onChange={() => toggleRow(refund.id)} />
+                      </div>
+                    </td>
+                    <td className="align-middle white-space-nowrap fw-semibold">
+                      <a href="#!">{refund.id}</a>
+                    </td>
+                    <td className="align-middle white-space-nowrap">
+                      <a className="fw-semibold" href="/pet-shop/order-details">{refund.orderId}</a>
+                    </td>
+                    <td className="align-middle white-space-nowrap text-body-highlight fw-semibold">
+                      {refund.customer}
+                    </td>
+                    <td className="align-middle text-body-tertiary" style={{maxWidth: 200}}>
+                      <span className="text-truncate d-inline-block" style={{maxWidth: 180}}>{refund.items}</span>
+                    </td>
+                    <td className="align-middle text-end fw-bold text-body-emphasis">
+                      {formatCurrency(refund.amount)}
+                    </td>
+                    <td className="align-middle text-body-tertiary fs-10" style={{maxWidth: 200}}>
+                      {refund.reason}
+                    </td>
+                    <td className="align-middle text-center">
+                      <span className={`badge badge-phoenix fs-10 ${getStatusBadgeClass(refund.status)}`}>
+                        <span className="badge-label">{refund.status}</span>
+                        <span className="ms-1" data-feather={getStatusIcon(refund.status)} style={{height: '12.8px', width: '12.8px'}}></span>
+                      </span>
+                    </td>
+                    <td className="align-middle white-space-nowrap text-body-tertiary text-end">
+                      {refund.date}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-  useEffect(() => {
-    if (window.feather) window.feather.replace();
-  }, []);
-
-  return <div dangerouslySetInnerHTML={{ __html: pageHtml }} style={{ display: "contents" }} />;
+          {/* Footer */}
+          <div className="row align-items-center justify-content-between py-2 pe-0 fs-9">
+            <div className="col-auto d-flex">
+              <p className="mb-0 d-none d-sm-block me-3 fw-semibold text-body">
+                Showing {filtered.length} of {refundsData.length} refund requests
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }

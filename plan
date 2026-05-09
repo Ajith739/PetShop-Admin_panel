@@ -1,0 +1,398 @@
+I'll provide you with a comprehensive admin dashboard structure for your pet shop e-commerce platform with detailed order workflow.
+MAIN MENU STRUCTURE
+1. Dashboard (Home)
+Content:
+
+Sales Overview Cards (Today, Week, Month, Year)
+Revenue Chart (Line/Bar graph)
+Order Statistics (Pending, Processing, Completed, Cancelled)
+Low Stock Alerts
+Recent Orders Table (Last 10)
+Top Selling Pets/Products
+Customer Analytics (New vs Returning)
+Quick Actions (Add Pet, Add Product, View Orders)
+
+
+2. Pet Management ⭐
+Submenus:
+
+All Pets
+Add New Pet
+Categories (Fish, Dogs, Cats, Birds)
+Breeds
+Pet Health Records
+
+All Pets Page Fields:
+
+Table Columns: ID, Image, Name, Category, Breed, Age, Gender, Price, Stock Status, Health Status, Actions
+Filters: Category, Breed, Price Range, Age, Gender, Health Status, Availability
+Bulk Actions: Delete, Update Stock, Update Price, Export
+
+Add/Edit Pet Page Fields:
+
+Basic Info: Pet Name, Category (dropdown), Breed, Species
+Details: Age, Date of Birth, Gender, Color/Markings
+Physical: Weight, Height/Length, Size (Small/Medium/Large)
+Pricing: Price, Discount %, Sale Price, Cost Price
+Inventory: SKU, Stock Quantity, Minimum Stock Alert
+Health: Health Status, Vaccination Status, Vaccination Date, Vet Certificate Upload
+Pedigree: Pedigree Certificate (Yes/No), Certificate Upload
+Care: Care Level (Easy/Moderate/High), Special Care Instructions
+Media: Multiple Images, Featured Image, Video URL
+Description: Short Description, Full Description (WYSIWYG)
+SEO: Meta Title, Meta Description, Keywords
+Status: Active/Inactive, Featured (Yes/No)
+
+
+3. Product Management (Supplies & Food)
+Submenus:
+
+All Products
+Add New Product
+Product Categories (Food, Toys, Accessories, Medicine, Aquariums, Cages)
+Brands
+Attributes (Size, Color, etc.)
+
+All Products Page Fields:
+
+Table: ID, Image, Name, Category, Brand, Price, Stock, Status, Actions
+Filters: Category, Brand, Price Range, Stock Status
+
+Add/Edit Product Page Fields:
+
+Product Name, Category, Sub-category, Brand
+Product Type: Simple/Variable
+SKU, Barcode
+Pricing: Regular Price, Sale Price, Cost Price
+Inventory: Stock Quantity, Stock Status, Backorder Allowed
+Shipping: Weight, Dimensions, Shipping Class
+Attributes: Size, Color, Material, etc.
+Images: Multiple images
+Descriptions: Short & Full
+Related Products, Upsells, Cross-sells
+SEO Fields
+Status
+
+
+4. Order Management ⭐⭐⭐
+Submenus:
+
+All Orders
+Pending Orders
+Processing Orders
+Shipped Orders
+Delivered Orders
+Cancelled/Refunded Orders
+
+All Orders Page Fields:
+
+Table: Order ID, Customer Name, Date, Items, Total Amount, Payment Status, Order Status, Actions
+Filters: Date Range, Status, Payment Method, Customer
+Bulk Actions: Update Status, Print Invoices, Export
+
+Order Details Page Fields:
+
+Order Info: Order Number, Date, Status, Payment Method, Payment Status
+Customer Info: Name, Email, Phone, Billing Address, Shipping Address
+Order Items Table: Image, Pet/Product Name, Category, Price, Quantity, Subtotal
+Pet-Specific Info (if applicable): Health Certificate, Vaccination Records, Transfer Documents
+Order Summary: Subtotal, Discount, Shipping, Tax, Total
+Order Notes: Customer Notes, Admin Notes
+Timeline: Order Created → Payment Received → Processing → Packed → Shipped → Delivered
+Actions: Update Status, Print Invoice, Print Packing Slip, Send Tracking Email, Refund, Cancel
+Shipping Info: Carrier, Tracking Number, Shipping Date, Expected Delivery
+Documents: Generate Pet Transfer Certificate, Health Certificate
+
+
+5. Customer Management
+Submenus:
+
+All Customers
+Add Customer
+Customer Groups
+Customer Reviews
+
+All Customers Page Fields:
+
+Table: ID, Name, Email, Phone, Total Orders, Total Spent, Registration Date, Status, Actions
+Filters: Registration Date, Total Spent, Status
+
+Customer Details Page Fields:
+
+Personal Info: Name, Email, Phone, Date of Birth, Avatar
+Addresses: Billing, Shipping (Multiple)
+Order History: All orders with status
+Wish List
+Pet Adoption History (if applicable)
+Account Status: Active/Inactive/Banned
+Notes: Admin notes about customer
+Statistics: Total Orders, Average Order Value, Lifetime Value
+
+
+6. Inventory Management
+Submenus:
+
+Stock Overview
+Stock Alerts (Low Stock, Out of Stock)
+Stock History
+Suppliers
+Purchase Orders
+
+Stock Overview Fields:
+
+Table: Product/Pet Name, SKU, Current Stock, Reserved, Available, Status
+Bulk Update Stock
+Import/Export Stock
+
+
+7. Reports & Analytics
+Submenus:
+
+Sales Report
+Product Report
+Customer Report
+Inventory Report
+Pet Adoption Report
+Tax Report
+
+Report Fields:
+
+Date Range Selector
+Export Options (PDF, Excel, CSV)
+Charts and Graphs
+Detailed Tables
+
+
+8. Marketing
+Submenus:
+
+Coupons/Discounts
+Email Campaigns
+Banners/Sliders
+Push Notifications
+
+Coupon Fields:
+
+Code, Type (Percentage/Fixed), Amount, Min/Max Purchase
+Usage Limits, Expiry Date, Products/Categories Applicable
+
+
+9. Content Management
+Submenus:
+
+Pages (About, Contact, Terms, Privacy)
+Blog Posts
+Pet Care Guides
+FAQs
+Testimonials
+
+
+10. Settings ⚙️
+Submenus:
+
+General Settings (Site Name, Logo, Contact Info)
+Payment Gateways (PayPal, Stripe, COD)
+Shipping Methods (Flat Rate, Free Shipping, Local Pickup)
+Tax Settings
+Email Templates
+Notification Settings
+User Roles & Permissions
+System Logs
+Backup & Restore
+
+
+COMPLETE ORDER WORKFLOW (Text-Based)
+ORDER WORKFLOW FOR PET SHOP ADMIN
+==================================
+
+STAGE 1: ORDER PLACEMENT
+├─→ Customer places order on website
+├─→ Order created with status: "PENDING PAYMENT"
+├─→ Order ID generated (e.g., #PS-2024-00001)
+├─→ Notification sent to: Admin Email, Admin Dashboard
+└─→ Inventory: Items marked as "RESERVED" (not deducted yet)
+
+↓
+
+STAGE 2: PAYMENT VERIFICATION
+├─→ Admin checks payment status in Orders > Pending
+├─→ IF payment method = COD:
+│   ├─→ Admin verifies customer phone/address
+│   └─→ Manual status update to "PAYMENT CONFIRMED"
+├─→ IF payment method = Online (Stripe/PayPal):
+│   ├─→ Auto-verification via webhook
+│   └─→ Auto-update to "PAYMENT CONFIRMED"
+├─→ IF payment fails:
+│   ├─→ Status remains "PENDING PAYMENT"
+│   ├─→ Auto-reminder email sent after 24 hours
+│   └─→ Auto-cancel after 48 hours → Inventory unreserved
+└─→ Inventory: Stock deducted from available quantity
+
+↓
+
+STAGE 3: ORDER PROCESSING
+├─→ Status updated to: "PROCESSING"
+├─→ Admin assigns order to warehouse/staff member
+├─→ IF order contains PETS:
+│   ├─→ Verify pet health certificate is valid
+│   ├─→ Check vaccination records are up-to-date
+│   ├─→ Prepare pet transfer documents
+│   ├─→ Generate health certificate for customer
+│   └─→ Notify pet care team for preparation
+├─→ IF order contains PRODUCTS only:
+│   ├─→ Pick items from inventory
+│   └─→ Quality check
+├─→ Generate packing slip
+├─→ Print invoice
+├─→ Update order notes with picker name and time
+└─→ Notification sent to: Customer (Email/SMS)
+
+↓
+
+STAGE 4: PACKING
+├─→ Status updated to: "PACKED"
+├─→ Items packed according to type:
+│   ├─→ Live Pets: Special carriers with ventilation
+│   ├─→ Fish: Water-filled bags with oxygen
+│   ├─→ Food: Check expiry dates
+│   └─→ Fragile items: Bubble wrap
+├─→ Attach shipping label
+├─→ IF pet order:
+│   └─→ Attach all documents to package:
+│       ├─→ Health certificate
+│       ├─→ Vaccination record copy
+│       ├─→ Care instructions
+│       └─→ Pet transfer form
+├─→ Upload package photos (proof of packing)
+└─→ Notification sent to: Customer
+
+↓
+
+STAGE 5: SHIPPING
+├─→ Status updated to: "SHIPPED"
+├─→ Select shipping carrier:
+│   ├─→ For Pets: Priority/Express shipping only
+│   └─→ For Products: Standard/Express options
+├─→ Admin enters:
+│   ├─→ Carrier name
+│   ├─→ Tracking number
+│   ├─→ Estimated delivery date
+│   └─→ Shipping date/time
+├─→ IF pet shipment:
+│   ├─→ Driver/Delivery person receives special instructions
+│   └─→ Customer receives emergency contact number
+├─→ Tracking link auto-generated
+├─→ Email/SMS sent to customer with tracking details
+├─→ Order timeline updated with shipping info
+└─→ Real-time tracking status synced (if integrated)
+
+↓
+
+STAGE 6: OUT FOR DELIVERY
+├─→ Status updated to: "OUT FOR DELIVERY"
+├─→ SMS/Push notification sent to customer
+├─→ IF pet delivery:
+│   └─→ Delivery person calls customer 30 mins before arrival
+└─→ Admin monitors delivery status
+
+↓
+
+STAGE 7: DELIVERY ATTEMPT
+├─→ IF successful delivery:
+│   ├─→ Customer signs for receipt (digital/physical)
+│   ├─→ IF pet delivery:
+│   │   ├─→ Customer inspects pet health
+│   │   ├─→ Signs pet transfer form
+│   │   └─→ Photos taken as proof
+│   ├─→ Delivery proof uploaded (signature, photo)
+│   ├─→ Status: "DELIVERED"
+│   ├─→ Payment released to merchant (if escrow)
+│   ├─→ Notification to admin and customer
+│   └─→ Auto-email: Review request sent after 24 hours
+│
+├─→ IF delivery failed:
+│   ├─→ Status: "DELIVERY FAILED"
+│   ├─→ Reason logged (Customer not home, wrong address, etc.)
+│   ├─→ Admin notified
+│   ├─→ Admin contacts customer to reschedule
+│   ├─→ Reattempt scheduled
+│   └─→ IF 3 failed attempts → Return to origin
+│
+└─→ IF pet delivery failed:
+    ├─→ Immediate admin alert (pets need immediate care)
+    ├─→ Pet returned to store/facility
+    └─→ Customer contacted for resolution
+
+↓
+
+STAGE 8: POST-DELIVERY
+├─→ Order marked: "COMPLETED"
+├─→ IF pet order:
+│   ├─→ Follow-up call after 24 hours (pet wellness check)
+│   ├─→ Follow-up email with care tips
+│   └─→ Schedule vaccination reminders (stored in system)
+├─→ Review request email sent
+├─→ Loyalty points credited (if applicable)
+├─→ Order archived after 30 days
+└─→ Analytics updated (revenue, customer lifetime value, etc.)
+
+↓
+
+ALTERNATIVE PATHS
+==================
+
+CANCELLATION FLOW:
+├─→ Customer/Admin initiates cancellation
+├─→ IF before "SHIPPED": Full refund eligible
+├─→ IF after "SHIPPED": Partial refund (shipping cost deducted)
+├─→ Status: "CANCELLED"
+├─→ IF payment received: Refund initiated
+├─→ Inventory: Stock returned to available
+├─→ Refund timeline: 5-7 business days
+└─→ Cancellation reason logged for analytics
+
+RETURN/REFUND FLOW:
+├─→ Customer requests return (within return window, e.g., 7 days)
+├─→ NOTE: Live pets typically non-returnable (except health issues)
+├─→ Admin reviews request in Orders > Returns section
+├─→ IF approved:
+│   ├─→ Return shipping label generated
+│   ├─→ Customer ships item back
+│   ├─→ Admin receives and inspects item
+│   ├─→ IF condition acceptable:
+│   │   ├─→ Refund processed
+│   │   └─→ Stock returned to inventory
+│   └─→ IF condition not acceptable:
+│       ├─→ Refund denied with reason
+│       └─→ Item returned to customer (at their cost)
+├─→ Status: "REFUNDED"
+└─→ Timeline: Return received → Inspected → Refund issued (3-5 days)
+
+EXCHANGE FLOW:
+├─→ Customer requests exchange
+├─→ Admin creates exchange order linked to original
+├─→ Original order status: "EXCHANGE REQUESTED"
+├─→ New order created with: "EXCHANGE ORDER"
+├─→ Return process same as above
+├─→ Once return received and approved:
+│   ├─→ New item shipped
+│   └─→ Price difference charged/refunded if applicable
+
+ORDER STATUS DEFINITIONS
+
+PENDING PAYMENT - Order placed, awaiting payment confirmation
+PAYMENT CONFIRMED - Payment received and verified
+PROCESSING - Order being prepared, items being picked
+PACKED - Items packed and ready for shipment
+SHIPPED - Package handed to carrier, in transit
+OUT FOR DELIVERY - With local delivery agent
+DELIVERED - Successfully delivered to customer
+COMPLETED - Order fulfilled, no further action needed
+CANCELLED - Order cancelled by customer/admin
+REFUNDED - Payment returned to customer
+DELIVERY FAILED - Delivery attempt unsuccessful
+EXCHANGE REQUESTED - Customer wants to exchange item
+RETURNED - Item returned by customer
+
+
+This structure gives you a comprehensive admin dashboard with all essential features for managing a pet shop e-commerce platform. The workflow ensures proper handling of both live pets and products with appropriate safety and documentation checks.

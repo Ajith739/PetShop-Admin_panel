@@ -1,454 +1,263 @@
-import { useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import usePhoenixInit from '../../../hooks/usePhoenixInit';
-
-const pageHtml = `<nav class="mb-3" aria-label="breadcrumb">
-          <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="#!">Page 1</a></li>
-            <li class="breadcrumb-item"><a href="#!">Page 2</a></li>
-            <li class="breadcrumb-item active">Default</li>
-          </ol>
-        </nav>
-        <div class="mb-9">
-          <div class="row g-2 mb-4">
-            <div class="col-auto">
-              <h2 class="mb-0">Customers</h2>
-            </div>
-          </div>
-          <ul class="nav nav-links mb-3 mb-lg-2 mx-n3">
-            <li class="nav-item"><a class="nav-link active" aria-current="page" href="#"><span>All </span><span class="text-body-tertiary fw-semibold">(68817)</span></a></li>
-            <li class="nav-item"><a class="nav-link" href="#"><span>New </span><span class="text-body-tertiary fw-semibold">(6)</span></a></li>
-            <li class="nav-item"><a class="nav-link" href="#"><span>Abandoned checkouts </span><span class="text-body-tertiary fw-semibold">(17)</span></a></li>
-            <li class="nav-item"><a class="nav-link" href="#"><span>Locals </span><span class="text-body-tertiary fw-semibold">(6,810)</span></a></li>
-            <li class="nav-item"><a class="nav-link" href="#"><span>Email subscribers </span><span class="text-body-tertiary fw-semibold">(8)</span></a></li>
-            <li class="nav-item"><a class="nav-link" href="#"><span>Top reviews </span><span class="text-body-tertiary fw-semibold">(2)</span></a></li>
-          </ul>
-          <div id="products" data-list='{"valueNames":["customer","email","total-orders","total-spent","city","last-seen","last-order"],"page":10,"pagination":true}'>
-            <div class="mb-4">
-              <div class="row g-3">
-                <div class="col-auto">
-                  <div class="search-box">
-                    <form class="position-relative"><input class="form-control search-input search" type="search" placeholder="Search customers" aria-label="Search" />
-                      <span class="fas fa-search search-box-icon"></span>
-                    </form>
-                  </div>
-                </div>
-                <div class="col-auto scrollbar overflow-hidden-y flex-grow-1">
-                  <div class="btn-group position-static" role="group">
-                    <div class="btn-group position-static text-nowrap"><button class="btn btn-phoenix-secondary px-7 flex-shrink-0" type="button" data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" data-bs-reference="parent"> Country<span class="fas fa-angle-down ms-2"></span></button>
-                      <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">US</a></li>
-                        <li><a class="dropdown-item" href="#">Uk</a></li>
-                        <li><a class="dropdown-item" href="#">Australia</a></li>
-                      </ul>
-                    </div>
-                    <div class="btn-group position-static text-nowrap"><button class="btn btn-sm btn-phoenix-secondary px-7 flex-shrink-0" type="button" data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" data-bs-reference="parent"> VIP<span class="fas fa-angle-down ms-2"></span></button>
-                      <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">VIP 1</a></li>
-                        <li><a class="dropdown-item" href="#">VIP 2</a></li>
-                        <li><a class="dropdown-item" href="#">VIP 3</a></li>
-                        <li></li>
-                      </ul>
-                    </div><button class="btn btn-phoenix-secondary px-7 flex-shrink-0">More filters</button>
-                  </div>
-                </div>
-                <div class="col-auto"><button class="btn btn-link text-body me-4 px-0"><span class="fa-solid fa-file-export fs-9 me-2"></span>Export</button>
-                  <button class="btn btn-primary"><span class="fas fa-plus me-2"></span>Add customer</button>
-                </div>
-              </div>
-            </div>
-            <div class="mx-n4 px-4 mx-lg-n6 px-lg-6 bg-body-emphasis border-top border-bottom border-translucent position-relative top-1">
-              <div class="table-responsive scrollbar-overlay mx-n1 px-1">
-                <table class="table table-sm fs-9 mb-0">
-                  <thead>
-                    <tr>
-                      <th class="white-space-nowrap fs-9 align-middle ps-0">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" id="checkbox-bulk-customers-select" type="checkbox" data-bulk-select='{"body":"customers-table-body"}' /></div>
-                      </th>
-                      <th class="sort align-middle pe-5" scope="col" data-sort="customer" style="width:10%;">CUSTOMER</th>
-                      <th class="sort align-middle pe-5" scope="col" data-sort="email" style="width:20%;">EMAIL</th>
-                      <th class="sort align-middle text-end" scope="col" data-sort="total-orders" style="width:10%">ORDERS</th>
-                      <th class="sort align-middle text-end ps-3" scope="col" data-sort="total-spent" style="width:10%">TOTAL SPENT</th>
-                      <th class="sort align-middle ps-7" scope="col" data-sort="city" style="width:25%;">CITY</th>
-                      <th class="sort align-middle text-end" scope="col" data-sort="last-seen" style="width:15%;">LAST SEEN</th>
-                      <th class="sort align-middle text-end pe-0" scope="col" data-sort="last-order" style="width:10%;min-width: 150px;">LAST ORDER</th>
-                    </tr>
-                  </thead>
-                  <tbody class="list" id="customers-table-body">
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/32.webp","name":"Carry Anna"},"email":"annac34@gmail.com","city":"Budapest","totalOrders":89,"totalSpent":23987,"lastSeen":"34 min ago","lastOrder":"Dec 12, 12:56 PM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/32.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Carry Anna</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:annac34@gmail.com">annac34@gmail.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">89</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 23987</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Budapest</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">34 min ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Dec 12, 12:56 PM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/avatar.webp","name":"Milind Mikuja","placeholder":true},"email":"mimiku@yahoo.com","city":"Manchester","totalOrders":76,"totalSpent":21567,"lastSeen":"6 hours ago","lastOrder":"Dec 9, 2:28 PM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle avatar-placeholder" src="/assets/img/team/avatar.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Milind Mikuja</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:mimiku@yahoo.com">mimiku@yahoo.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">76</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 21567</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Manchester</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">6 hours ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Dec 9, 2:28 PM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/35.webp","name":"Stanly Drinkwater"},"email":"stnlwasser@hotmail.com","city":"Smallville","totalOrders":69,"totalSpent":19872,"lastSeen":"43 min ago","lastOrder":"Dec 4, 12:56 PM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/35.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Stanly Drinkwater</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:stnlwasser@hotmail.com">stnlwasser@hotmail.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">69</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 19872</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Smallville</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">43 min ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Dec 4, 12:56 PM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/57.webp","name":"Josef Stravinsky"},"email":"Josefsky@sni.it","city":"Metropolis","totalOrders":67,"totalSpent":17996,"lastSeen":"2 hours ago","lastOrder":"Dec 1,  4:07 AM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/57.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Josef Stravinsky</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:Josefsky@sni.it">Josefsky@sni.it</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">67</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 17996</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Metropolis</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">2 hours ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Dec 1, 4:07 AM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/58.webp","name":"Igor Borvibson"},"email":"vibigorr@technext.it","city":"Central city","totalOrders":61,"totalSpent":16785,"lastSeen":"5 days ago","lastOrder":"Nov 28, 7:28 PM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/58.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Igor Borvibson</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:vibigorr@technext.it">vibigorr@technext.it</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">61</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 16785</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Central city</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">5 days ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Nov 28, 7:28 PM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/59.webp","name":"Katerina Karenin"},"email":"karkat99@gmail.com","city":"Gotham","totalOrders":58,"totalSpent":14956,"lastSeen":"2 weeks ago","lastOrder":"Nov 24, 10:16 AM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/59.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Katerina Karenin</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:karkat99@gmail.com">karkat99@gmail.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">58</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 14956</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Gotham</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">2 weeks ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Nov 24, 10:16 AM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"","name":"Roy Anderson"},"email":"andersonroy@netflix.chill","city":"Vancouver","totalOrders":52,"totalSpent":12509,"lastSeen":"4 days ago","lastOrder":"Nov 18, 5:43 PM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m">
-                            <div class="avatar-name rounded-circle"><span>R</span></div>
-                          </div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Roy Anderson</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:andersonroy@netflix.chill">andersonroy@netflix.chill</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">52</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 12509</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Vancouver</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">4 days ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Nov 18, 5:43 PM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/31.webp","name":"Martina scorcese"},"email":"cesetina1@gmail.com","city":"Viena","totalOrders":49,"totalSpent":11003,"lastSeen":"6 min ago","lastOrder":"Nov 18, 2:09 AM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/31.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Martina scorcese</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:cesetina1@gmail.com">cesetina1@gmail.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">49</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 11003</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Viena</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">6 min ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Nov 18, 2:09 AM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/33.webp","name":"Luis Bunuel"},"email":"luisuel@live.com","city":"Bangalore","totalOrders":44,"totalSpent":7897,"lastSeen":"56 min ago","lastOrder":"Nov 16, 3:22 PM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/33.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Luis Bunuel</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:luisuel@live.com">luisuel@live.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">44</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 7897</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Bangalore</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">56 min ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Nov 16, 3:22 PM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/34.webp","name":"Jean Renoir"},"email":"renoirjean1836@gmail.com","city":"Chittagong","totalOrders":37,"totalSpent":7781,"lastSeen":"Yesterday","lastOrder":"Nov 09, 8:49 AM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/34.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Jean Renoir</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:renoirjean1836@gmail.com">renoirjean1836@gmail.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">37</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 7781</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Chittagong</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">Yesterday</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Nov 09, 8:49 AM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/29.webp","name":"Ricky Antony"},"email":"ricky@example.com","city":"New Jersey","totalOrders":33,"totalSpent":7825,"lastSeen":"1 hour ago","lastOrder":"Oct 19, 8:00 AM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/29.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Ricky Antony</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:ricky@example.com">ricky@example.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">33</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 7825</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">New Jersey</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">1 hour ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Oct 19, 8:00 AM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/3.webp","name":"Emma Watson"},"email":"emma@example.com","city":"New York","totalOrders":45,"totalSpent":18975,"lastSeen":"6 hours ago","lastOrder":"Oct 15, 12:00 PM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/3.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Emma Watson</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:emma@example.com">emma@example.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">45</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 18975</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">New York</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">6 hours ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Oct 15, 12:00 PM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/avatar.webp","name":"Jennifer Schramm","placeholder":true},"email":"jennifer@example.com","city":"Charlotte","totalOrders":39,"totalSpent":8967,"lastSeen":"12 hours ago","lastOrder":"Oct 12, 11:00 AM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle avatar-placeholder" src="/assets/img/team/avatar.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Jennifer Schramm</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:jennifer@example.com">jennifer@example.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">39</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 8967</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Charlotte</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">12 hours ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Oct 12, 11:00 AM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/32.webp","name":"Raymond Mims"},"email":"raymond@example.com","city":"Artesia","totalOrders":30,"totalSpent":14587,"lastSeen":"2 day ago","lastOrder":"Oct 10, 8:30 AM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/32.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Raymond Mims</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:raymond@example.com">raymond@example.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">30</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 14587</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Artesia</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">2 day ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Oct 10, 8:30 AM</td>
-                    </tr>
-                    <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                      <td class="fs-9 align-middle ps-0 py-3">
-                        <div class="form-check mb-0 fs-8"><input class="form-check-input" type="checkbox" data-bulk-select-row='{"customer":{"avatar":"/team/25.webp","name":"Michael Jenkins"},"email":"jenkins@example.com","city":"Philadelphia","totalOrders":43,"totalSpent":45697,"lastSeen":"12 hours ago","lastOrder":"Oct 3, 8:30 AM"}' /></div>
-                      </td>
-                      <td class="customer align-middle white-space-nowrap pe-5"><a class="d-flex align-items-center text-body-emphasis" href="customer-details">
-                          <div class="avatar avatar-m"><img class="rounded-circle" src="/assets/img/team/25.webp" alt="" /></div>
-                          <p class="mb-0 ms-3 text-body-emphasis fw-bold">Michael Jenkins</p>
-                        </a></td>
-                      <td class="email align-middle white-space-nowrap pe-5"><a class="fw-semibold" href="mailto:jenkins@example.com">jenkins@example.com</a></td>
-                      <td class="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">43</td>
-                      <td class="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">$ 45697</td>
-                      <td class="city align-middle white-space-nowrap text-body-highlight ps-7">Philadelphia</td>
-                      <td class="last-seen align-middle white-space-nowrap text-body-tertiary text-end">12 hours ago</td>
-                      <td class="last-order align-middle white-space-nowrap text-body-tertiary text-end">Oct 3, 8:30 AM</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div class="row align-items-center justify-content-between py-2 pe-0 fs-9">
-                <div class="col-auto d-flex">
-                  <p class="mb-0 d-none d-sm-block me-3 fw-semibold text-body" data-list-info="data-list-info"></p><a class="fw-semibold" href="#!" data-list-view="*">View all<span class="fas fa-angle-right ms-1" data-fa-transform="down-1"></span></a><a class="fw-semibold d-none" href="#!" data-list-view="less">View Less<span class="fas fa-angle-right ms-1" data-fa-transform="down-1"></span></a>
-                </div>
-                <div class="col-auto d-flex"><button class="page-link" data-list-pagination="prev"><span class="fas fa-chevron-left"></span></button>
-                  <ul class="mb-0 pagination"></ul><button class="page-link pe-0" data-list-pagination="next"><span class="fas fa-chevron-right"></span></button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <footer class="footer position-absolute">
-          <div class="row g-0 justify-content-between align-items-center h-100">
-            <div class="col-12 col-sm-auto text-center">
-              <p class="mb-0 mt-2 mt-sm-0 text-body">Thank you for creating with Phoenix<span class="d-none d-sm-inline-block"></span><span class="d-none d-sm-inline-block mx-1">|</span><br class="d-sm-none" />2025 &copy;<a class="mx-1" href="https://themewagon.com/">Themewagon</a></p>
-            </div>
-            <div class="col-12 col-sm-auto text-center">
-              <p class="mb-0 text-body-tertiary text-opacity-85">v1.24.0</p>
-            </div>
-          </div>
-        </footer>
-      </div>
-      <div class="modal fade" id="searchBoxModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="true" data-phoenix-modal="data-phoenix-modal" style="--phoenix-backdrop-opacity: 1;">
-        <div class="modal-dialog">
-          <div class="modal-content mt-15 rounded-pill">
-            <div class="modal-body p-0">
-              <div class="search-box navbar-top-search-box" data-list='{"valueNames":["title"]}' style="width: auto;">
-                <form class="position-relative" data-bs-toggle="search" data-bs-display="static"><input class="form-control search-input fuzzy-search rounded-pill form-control-lg" type="search" placeholder="Search..." aria-label="Search" />
-                  <span class="fas fa-search search-box-icon"></span>
-                </form>
-                <div class="btn-close position-absolute end-0 top-50 translate-middle cursor-pointer shadow-none" data-bs-dismiss="search"><button class="btn btn-link p-0" aria-label="Close"></button></div>
-                <div class="dropdown-menu border start-0 py-0 overflow-hidden w-100">
-                  <div class="scrollbar-overlay" style="max-height: 30rem;">
-                    <div class="list pb-3">
-                      <h6 class="dropdown-header text-body-highlight fs-10 py-2">24 <span class="text-body-quaternary">results</span></h6>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Recently Searched </h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-clock-rotate-left" data-fa-transform="shrink-2"></span> Store Macbook</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-clock-rotate-left" data-fa-transform="shrink-2"></span> MacBook Air - 13″</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Products</h6>
-                      <div class="py-2"><a class="dropdown-item py-2 d-flex align-items-center" href="../landing/product-details">
-                          <div class="file-thumbnail me-2"><img class="h-100 w-100 object-fit-cover rounded-3" src="/assets/img/products/60x60/3.png" alt="" /></div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">MacBook Air - 13″</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary"><span class="fw-medium text-body-tertiary text-opactity-85">8GB Memory - 1.6GHz - 128GB Storage</span></p>
-                          </div>
-                        </a>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="../landing/product-details">
-                          <div class="file-thumbnail me-2"><img class="img-fluid" src="/assets/img/products/60x60/3.png" alt="" /></div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">MacBook Pro - 13″</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary"><span class="fw-medium text-body-tertiary text-opactity-85">30 Sep at 12:30 PM</span></p>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Quick Links</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-link text-body" data-fa-transform="shrink-2"></span> Support MacBook House</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-link text-body" data-fa-transform="shrink-2"></span> Store MacBook″</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Files</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-file-zipper text-body" data-fa-transform="shrink-2"></span> Library MacBook folder.rar</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-file-lines text-body" data-fa-transform="shrink-2"></span> Feature MacBook extensions.txt</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-image text-body" data-fa-transform="shrink-2"></span> MacBook Pro_13.jpg</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Members</h6>
-                      <div class="py-2"><a class="dropdown-item py-2 d-flex align-items-center" href="/members">
-                          <div class="avatar avatar-l status-online  me-2 text-body">
-                            <img class="rounded-circle " src="/assets/img/team/40x40/10.webp" alt="" />
-                          </div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">Carry Anna</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary">anna@technext.it</p>
-                          </div>
-                        </a>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="/members">
-                          <div class="avatar avatar-l  me-2 text-body">
-                            <img class="rounded-circle " src="/assets/img/team/40x40/12.webp" alt="" />
-                          </div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">John Smith</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary">smith@technext.it</p>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Related Searches</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-brands fa-firefox-browser text-body" data-fa-transform="shrink-2"></span> Search in the Web MacBook</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-brands fa-chrome text-body" data-fa-transform="shrink-2"></span> Store MacBook″</div>
-                          </div>
-                        </a>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <p class="fallback fw-bold fs-7 d-none">No Result Found.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>`;
+import { customersData, formatCurrency } from './petShopData';
 
 export default function Customers() {
   usePhoenixInit();
 
-  useEffect(() => {
-    if (window.feather) window.feather.replace();
-  }, []);
+  const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
+  const [cityFilter, setCityFilter] = useState('');
+  const [petTypeFilter, setPetTypeFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  const perPage = 10;
 
-  return <div dangerouslySetInnerHTML={{ __html: pageHtml }} style={{ display: "contents" }} />;
+  useEffect(() => { if (window.feather) window.feather.replace(); });
+
+  const cities = [...new Set(customersData.map(c => c.city))];
+  const petOwnerTypes = [...new Set(customersData.map(c => c.petOwnerType))];
+
+  const filtered = useMemo(() => {
+    return customersData.filter(c => {
+      const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase());
+      const matchTab = activeTab === 'all' ||
+        (activeTab === 'new' && c.totalOrders < 40) ||
+        (activeTab === 'repeat' && c.totalOrders >= 40) ||
+        (activeTab === 'dog' && c.petOwnerType === 'Dog Owner') ||
+        (activeTab === 'cat' && c.petOwnerType === 'Cat Owner') ||
+        (activeTab === 'loyalty' && (c.loyaltyTier === 'Gold' || c.loyaltyTier === 'Silver'));
+      const matchCity = !cityFilter || c.city === cityFilter;
+      const matchPetType = !petTypeFilter || c.petOwnerType === petTypeFilter;
+      return matchSearch && matchTab && matchCity && matchPetType;
+    });
+  }, [search, activeTab, cityFilter, petTypeFilter]);
+
+  const totalPages = Math.ceil(filtered.length / perPage);
+  const pageData = filtered.slice((page - 1) * perPage, page * perPage);
+
+  const counts = {
+    all: customersData.length,
+    new: customersData.filter(c => c.totalOrders < 40).length,
+    repeat: customersData.filter(c => c.totalOrders >= 40).length,
+    dog: customersData.filter(c => c.petOwnerType === 'Dog Owner').length,
+    cat: customersData.filter(c => c.petOwnerType === 'Cat Owner').length,
+    loyalty: customersData.filter(c => c.loyaltyTier === 'Gold' || c.loyaltyTier === 'Silver').length,
+  };
+
+  const toggleRow = (id) => {
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedRows.size === pageData.length) setSelectedRows(new Set());
+    else setSelectedRows(new Set(pageData.map(c => c.id)));
+  };
+
+  const getInitial = (name) => name.charAt(0).toUpperCase();
+
+  const loyaltyBadgeClass = (tier) => {
+    if (tier === 'Gold') return 'badge-phoenix-warning';
+    if (tier === 'Silver') return 'badge-phoenix-secondary';
+    return 'badge-phoenix-info';
+  };
+
+  return (
+    <>
+      <nav className="mb-3" aria-label="breadcrumb">
+        <ol className="breadcrumb mb-0">
+          <li className="breadcrumb-item"><a href="/">Pet Shop</a></li>
+          <li className="breadcrumb-item"><a href="/pet-shop/customers">Customers</a></li>
+          <li className="breadcrumb-item active">Customer list</li>
+        </ol>
+      </nav>
+
+      <div className="mb-9">
+        <div className="row g-2 mb-4">
+          <div className="col-auto">
+            <h2 className="mb-0">Customers</h2>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <ul className="nav nav-links mb-3 mb-lg-2 mx-n3">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'new', label: 'New' },
+            { key: 'repeat', label: 'Repeat Buyers' },
+            { key: 'dog', label: 'Dog Owners' },
+            { key: 'cat', label: 'Cat Owners' },
+            { key: 'loyalty', label: 'Loyalty Members' },
+          ].map(tab => (
+            <li key={tab.key} className="nav-item">
+              <a className={`nav-link ${activeTab === tab.key ? 'active' : ''}`}
+                href="#" onClick={(e) => { e.preventDefault(); setActiveTab(tab.key); setPage(1); }}>
+                <span>{tab.label} </span>
+                <span className="text-body-tertiary fw-semibold">({counts[tab.key]})</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        {/* Search & Filters */}
+        <div className="mb-4">
+          <div className="row g-3">
+            <div className="col-auto">
+              <div className="search-box">
+                <form className="position-relative">
+                  <input className="form-control search-input search" type="search" placeholder="Search customers"
+                    value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+                  <span className="fas fa-search search-box-icon"></span>
+                </form>
+              </div>
+            </div>
+            <div className="col-auto scrollbar overflow-hidden-y flex-grow-1">
+              <div className="btn-group position-static" role="group">
+                <div className="btn-group position-static text-nowrap">
+                  <button className="btn btn-phoenix-secondary px-7 flex-shrink-0" type="button"
+                    data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
+                    {cityFilter || 'City'}<span className="fas fa-angle-down ms-2"></span>
+                  </button>
+                  <ul className="dropdown-menu">
+                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setCityFilter(''); setPage(1); }}>All Cities</a></li>
+                    {cities.map(c => (
+                      <li key={c}><a className="dropdown-item" href="#"
+                        onClick={(e) => { e.preventDefault(); setCityFilter(c); setPage(1); }}>{c}</a></li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="btn-group position-static text-nowrap">
+                  <button className="btn btn-sm btn-phoenix-secondary px-7 flex-shrink-0" type="button"
+                    data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
+                    {petTypeFilter || 'Pet Type'}<span className="fas fa-angle-down ms-2"></span>
+                  </button>
+                  <ul className="dropdown-menu">
+                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setPetTypeFilter(''); setPage(1); }}>All Types</a></li>
+                    {petOwnerTypes.map(pt => (
+                      <li key={pt}><a className="dropdown-item" href="#"
+                        onClick={(e) => { e.preventDefault(); setPetTypeFilter(pt); setPage(1); }}>{pt}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div className="col-auto">
+              <button className="btn btn-link text-body me-4 px-0">
+                <span className="fa-solid fa-file-export fs-9 me-2"></span>Export
+              </button>
+              <button className="btn btn-primary">
+                <span className="fas fa-plus me-2"></span>Add customer
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="mx-n4 px-4 mx-lg-n6 px-lg-6 bg-body-emphasis border-top border-bottom border-translucent position-relative top-1">
+          <div className="table-responsive scrollbar-overlay mx-n1 px-1">
+            <table className="table table-sm fs-9 mb-0">
+              <thead>
+                <tr>
+                  <th className="white-space-nowrap fs-9 align-middle ps-0">
+                    <div className="form-check mb-0 fs-8">
+                      <input className="form-check-input" type="checkbox"
+                        checked={selectedRows.size === pageData.length && pageData.length > 0}
+                        onChange={toggleAll} />
+                    </div>
+                  </th>
+                  <th className="sort align-middle pe-5" scope="col" style={{width: '15%'}}>CUSTOMER</th>
+                  <th className="sort align-middle pe-5" scope="col" style={{width: '18%'}}>EMAIL</th>
+                  <th className="sort align-middle text-end" scope="col" style={{width: '8%'}}>ORDERS</th>
+                  <th className="sort align-middle text-end ps-3" scope="col" style={{width: '10%'}}>TOTAL SPENT</th>
+                  <th className="sort align-middle ps-7" scope="col" style={{width: '10%'}}>CITY</th>
+                  <th className="sort align-middle ps-4" scope="col" style={{width: '10%'}}>PET TYPE</th>
+                  <th className="sort align-middle text-center ps-4" scope="col" style={{width: '8%'}}>LOYALTY</th>
+                  <th className="sort align-middle text-end" scope="col" style={{width: '10%'}}>LAST SEEN</th>
+                  <th className="sort align-middle text-end pe-0" scope="col" style={{width: '11%', minWidth: 150}}>LAST ORDER</th>
+                </tr>
+              </thead>
+              <tbody className="list">
+                {pageData.map(customer => (
+                  <tr key={customer.id} className="hover-actions-trigger btn-reveal-trigger position-static">
+                    <td className="fs-9 align-middle ps-0 py-3">
+                      <div className="form-check mb-0 fs-8">
+                        <input className="form-check-input" type="checkbox"
+                          checked={selectedRows.has(customer.id)} onChange={() => toggleRow(customer.id)} />
+                      </div>
+                    </td>
+                    <td className="customer align-middle white-space-nowrap pe-5">
+                      <a className="d-flex align-items-center text-body-emphasis" href="/pet-shop/customer-details">
+                        {customer.avatar ? (
+                          <div className="avatar avatar-m"><img className="rounded-circle" src={customer.avatar} alt="" /></div>
+                        ) : (
+                          <div className="avatar avatar-m">
+                            <div className="avatar-name rounded-circle"><span>{getInitial(customer.name)}</span></div>
+                          </div>
+                        )}
+                        <p className="mb-0 ms-3 text-body-emphasis fw-bold">{customer.name}</p>
+                      </a>
+                    </td>
+                    <td className="email align-middle white-space-nowrap pe-5">
+                      <a className="fw-semibold" href={`mailto:${customer.email}`}>{customer.email}</a>
+                    </td>
+                    <td className="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">
+                      {customer.totalOrders}
+                    </td>
+                    <td className="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">
+                      {formatCurrency(customer.totalSpent)}
+                    </td>
+                    <td className="city align-middle white-space-nowrap text-body-highlight ps-7">
+                      {customer.city}
+                    </td>
+                    <td className="align-middle white-space-nowrap text-body-highlight ps-4 fs-10">
+                      {customer.petOwnerType}
+                    </td>
+                    <td className="align-middle white-space-nowrap text-center ps-4">
+                      <span className={`badge badge-phoenix fs-10 ${loyaltyBadgeClass(customer.loyaltyTier)}`}>
+                        {customer.loyaltyTier}
+                      </span>
+                    </td>
+                    <td className="last-seen align-middle white-space-nowrap text-body-tertiary text-end">
+                      {customer.lastSeen}
+                    </td>
+                    <td className="last-order align-middle white-space-nowrap text-body-tertiary text-end">
+                      {customer.lastOrder}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="row align-items-center justify-content-between py-2 pe-0 fs-9">
+            <div className="col-auto d-flex">
+              <p className="mb-0 d-none d-sm-block me-3 fw-semibold text-body">
+                {filtered.length > 0 ? `${(page-1)*perPage + 1} to ${Math.min(page*perPage, filtered.length)} of ${filtered.length}` : 'No results'}
+              </p>
+            </div>
+            <div className="col-auto d-flex">
+              <button className="page-link" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                <span className="fas fa-chevron-left"></span>
+              </button>
+              <ul className="mb-0 pagination">
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <li key={i} className={`page-item ${page === i + 1 ? 'active' : ''}`}>
+                    <button className="page-link" onClick={() => setPage(i + 1)}>{i + 1}</button>
+                  </li>
+                ))}
+              </ul>
+              <button className="page-link pe-0" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+                <span className="fas fa-chevron-right"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }

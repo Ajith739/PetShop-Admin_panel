@@ -2,437 +2,97 @@ import { useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import usePhoenixInit from '../hooks/usePhoenixInit';
 
-const sidebarHtml = `    <nav class="navbar navbar-vertical navbar-expand-lg" style="display:none;">
-      <div class="collapse navbar-collapse" id="navbarVerticalCollapse">
-        <!-- scrollbar removed-->
-        <div class="navbar-vertical-content">
-          <ul class="navbar-nav flex-column" id="navbarVerticalNav">
-            <li class="nav-item">
-              <!-- parent pages-->
-              <div class="nav-item-wrapper"><a class="nav-link dropdown-indicator label-1" href="#nv-home" role="button"
-                  data-bs-toggle="collapse" aria-expanded="true" aria-controls="nv-home">
-                  <div class="d-flex align-items-center">
-                    <div class="dropdown-indicator-icon-wrapper"><span
-                        class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                      class="nav-link-icon"><span data-feather="pie-chart"></span></span><span
-                      class="nav-link-text">Home</span>
-                  </div>
-                </a>
-                <div class="parent-wrapper label-1">
-                  <ul class="nav collapse parent show" data-bs-parent="#navbarVerticalCollapse" id="nv-home">
-                    <li class="collapsed-nav-item-title d-none">Home</li>
-                    <li class="nav-item"><a class="nav-link active" href="/">
-                        <div class="d-flex align-items-center"><span class="nav-link-text">E commerce</span></div>
-                      </a><!-- more inner pages-->
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </li>
-            <li class="nav-item">
-              <!-- label-->
-              <p class="navbar-vertical-label">Apps</p>
-              <hr class="navbar-vertical-line" /><!-- parent pages-->
-              <div class="nav-item-wrapper"><a class="nav-link dropdown-indicator label-1" href="#nv-e-commerce"
-                  role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="nv-e-commerce">
-                  <div class="d-flex align-items-center">
-                    <div class="dropdown-indicator-icon-wrapper"><span
-                        class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                      class="nav-link-icon"><span data-feather="shopping-cart"></span></span><span
-                      class="nav-link-text">E commerce</span>
-                  </div>
-                </a>
-                <div class="parent-wrapper label-1">
-                  <ul class="nav collapse parent" data-bs-parent="#navbarVerticalCollapse" id="nv-e-commerce">
-                    <li class="collapsed-nav-item-title d-none">E commerce</li>
-                    <li class="nav-item"><a class="nav-link dropdown-indicator" href="#nv-admin"
-                        data-bs-toggle="collapse" aria-expanded="true" aria-controls="nv-admin">
-                        <div class="d-flex align-items-center">
-                          <div class="dropdown-indicator-icon-wrapper"><span
-                              class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                            class="nav-link-text">Admin</span>
-                        </div>
-                      </a><!-- more inner pages-->
-                      <div class="parent-wrapper">
-                        <ul class="nav collapse parent show" data-bs-parent="#e-commerce" id="nv-admin">
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/admin/add-product">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Add product</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/admin/products">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Products</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/admin/customers">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Customers</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/admin/customer-details">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Customer details</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/admin/orders">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Orders</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/admin/order-details">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Order details</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/admin/refund">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Refund</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                        </ul>
-                      </div>
-                    </li>
-                    <li class="nav-item"><a class="nav-link dropdown-indicator" href="#nv-customer"
-                        data-bs-toggle="collapse" aria-expanded="true" aria-controls="nv-customer">
-                        <div class="d-flex align-items-center">
-                          <div class="dropdown-indicator-icon-wrapper"><span
-                              class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                            class="nav-link-text">Customer</span>
-                        </div>
-                      </a><!-- more inner pages-->
-                      <div class="parent-wrapper">
-                        <ul class="nav collapse parent show" data-bs-parent="#e-commerce" id="nv-customer">
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/homepage">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Homepage</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/product-details">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Product details</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/products-filter">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Products filter</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/cart">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Cart</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/checkout">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Checkout</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/shipping-info">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Shipping info</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/profile">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Profile</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/favourite-stores">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Favourite stores</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/wishlist">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Wishlist</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/order-tracking">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Order tracking</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/apps/e-commerce/landing/invoice">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Invoice</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                        </ul>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              <div class="nav-item-wrapper"><a class="nav-link label-1" href="/apps/chat" role="button"
-                  data-bs-toggle="" aria-expanded="false">
-                  <div class="d-flex align-items-center"><span class="nav-link-icon"><span
-                        data-feather="message-square"></span></span><span class="nav-link-text-wrapper"><span
-                        class="nav-link-text">Chat</span></span></div>
-                </a></div><!-- parent pages-->
-              <div class="nav-item-wrapper"><a class="nav-link dropdown-indicator label-1" href="#nv-email"
-                  role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="nv-email">
-                  <div class="d-flex align-items-center">
-                    <div class="dropdown-indicator-icon-wrapper"><span
-                        class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                      class="nav-link-icon"><span data-feather="mail"></span></span><span
-                      class="nav-link-text">Email</span>
-                  </div>
-                </a>
-                <div class="parent-wrapper label-1">
-                  <ul class="nav collapse parent" data-bs-parent="#navbarVerticalCollapse" id="nv-email">
-                    <li class="collapsed-nav-item-title d-none">Email</li>
-                    <li class="nav-item"><a class="nav-link" href="/apps/email/inbox">
-                        <div class="d-flex align-items-center"><span class="nav-link-text">Inbox</span></div>
-                      </a><!-- more inner pages-->
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="/apps/email/detail">
-                        <div class="d-flex align-items-center"><span class="nav-link-text">Email detail</span></div>
-                      </a><!-- more inner pages-->
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="/apps/email/compose">
-                        <div class="d-flex align-items-center"><span class="nav-link-text">Compose</span></div>
-                      </a><!-- more inner pages-->
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              <div class="nav-item-wrapper"><a class="nav-link dropdown-indicator label-1" href="#nv-social"
-                  role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="nv-social">
-                  <div class="d-flex align-items-center">
-                    <div class="dropdown-indicator-icon-wrapper"><span
-                        class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                      class="nav-link-icon"><span data-feather="share-2"></span></span><span
-                      class="nav-link-text">Social</span>
-                  </div>
-                </a>
-                <div class="parent-wrapper label-1">
-                  <ul class="nav collapse parent" data-bs-parent="#navbarVerticalCollapse" id="nv-social">
-                    <li class="collapsed-nav-item-title d-none">Social</li>
-                    <li class="nav-item"><a class="nav-link" href="/apps/social/profile">
-                        <div class="d-flex align-items-center"><span class="nav-link-text">Profile</span></div>
-                      </a><!-- more inner pages-->
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="/apps/social/settings">
-                        <div class="d-flex align-items-center"><span class="nav-link-text">Settings</span></div>
-                      </a><!-- more inner pages-->
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              <div class="nav-item-wrapper"><a class="nav-link label-1" href="/apps/calendar" role="button"
-                  data-bs-toggle="" aria-expanded="false">
-                  <div class="d-flex align-items-center"><span class="nav-link-icon"><span
-                        data-feather="calendar"></span></span><span class="nav-link-text-wrapper"><span
-                        class="nav-link-text">Calendar</span></span></div>
-                </a></div>
-            </li>
-            <li class="nav-item">
-              <!-- label-->
-              <p class="navbar-vertical-label">Pages</p>
-              <hr class="navbar-vertical-line" /><!-- parent pages-->
-              <div class="nav-item-wrapper"><a class="nav-link label-1" href="/starter" role="button"
-                  data-bs-toggle="" aria-expanded="false">
-                  <div class="d-flex align-items-center"><span class="nav-link-icon"><span
-                        data-feather="compass"></span></span><span class="nav-link-text-wrapper"><span
-                        class="nav-link-text">Starter</span></span></div>
-                </a></div>
-              <div class="nav-item-wrapper"><a class="nav-link label-1" href="/notifications" role="button"
-                  data-bs-toggle="" aria-expanded="false">
-                  <div class="d-flex align-items-center"><span class="nav-link-icon"><span
-                        data-feather="bell"></span></span><span class="nav-link-text-wrapper"><span
-                        class="nav-link-text">Notifications</span></span></div>
-                </a></div><!-- parent pages-->
-              <div class="nav-item-wrapper"><a class="nav-link label-1" href="/members" role="button"
-                  data-bs-toggle="" aria-expanded="false">
-                  <div class="d-flex align-items-center"><span class="nav-link-icon"><span
-                        data-feather="users"></span></span><span class="nav-link-text-wrapper"><span
-                        class="nav-link-text">Members</span></span></div>
-                </a></div><!-- parent pages-->
-              <div class="nav-item-wrapper"><a class="nav-link label-1" href="/timeline" role="button"
-                  data-bs-toggle="" aria-expanded="false">
-                  <div class="d-flex align-items-center"><span class="nav-link-icon"><span
-                        data-feather="clock"></span></span><span class="nav-link-text-wrapper"><span
-                        class="nav-link-text">Timeline</span></span></div>
-                </a></div><!-- parent pages-->
-              <div class="nav-item-wrapper"><a class="nav-link dropdown-indicator label-1" href="#nv-errors"
-                  role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="nv-errors">
-                  <div class="d-flex align-items-center">
-                    <div class="dropdown-indicator-icon-wrapper"><span
-                        class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                      class="nav-link-icon"><span data-feather="alert-triangle"></span></span><span
-                      class="nav-link-text">Errors</span>
-                  </div>
-                </a>
-                <div class="parent-wrapper label-1">
-                  <ul class="nav collapse parent" data-bs-parent="#navbarVerticalCollapse" id="nv-errors">
-                    <li class="collapsed-nav-item-title d-none">Errors</li>
-                    <li class="nav-item"><a class="nav-link" href="/errors/404">
-                        <div class="d-flex align-items-center"><span class="nav-link-text">404</span></div>
-                      </a><!-- more inner pages-->
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="/errors/403">
-                        <div class="d-flex align-items-center"><span class="nav-link-text">403</span></div>
-                      </a><!-- more inner pages-->
-                    </li>
-                    <li class="nav-item"><a class="nav-link" href="/errors/500">
-                        <div class="d-flex align-items-center"><span class="nav-link-text">500</span></div>
-                      </a><!-- more inner pages-->
-                    </li>
-                  </ul>
-                </div>
-              </div><!-- parent pages-->
-              <div class="nav-item-wrapper"><a class="nav-link dropdown-indicator label-1" href="#nv-authentication"
-                  role="button" data-bs-toggle="collapse" aria-expanded="false" aria-controls="nv-authentication">
-                  <div class="d-flex align-items-center">
-                    <div class="dropdown-indicator-icon-wrapper"><span
-                        class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                      class="nav-link-icon"><span data-feather="lock"></span></span><span
-                      class="nav-link-text">Authentication</span>
-                  </div>
-                </a>
-                <div class="parent-wrapper label-1">
-                  <ul class="nav collapse parent" data-bs-parent="#navbarVerticalCollapse" id="nv-authentication">
-                    <li class="collapsed-nav-item-title d-none">Authentication</li>
-                    <li class="nav-item"><a class="nav-link dropdown-indicator" href="#nv-simple"
-                        data-bs-toggle="collapse" aria-expanded="false" aria-controls="nv-simple">
-                        <div class="d-flex align-items-center">
-                          <div class="dropdown-indicator-icon-wrapper"><span
-                              class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                            class="nav-link-text">Simple</span>
-                        </div>
-                      </a><!-- more inner pages-->
-                      <div class="parent-wrapper">
-                        <ul class="nav collapse parent" data-bs-parent="#authentication" id="nv-simple">
-                          <li class="nav-item"><a class="nav-link" href="/auth/sign-in">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Sign in</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/sign-up">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Sign up</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/sign-out">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Sign out</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link"
-                              href="/auth/forgot-password">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Forgot password</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link"
-                              href="/auth/reset-password">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Reset password</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/lock-screen">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Lock screen</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/2fa">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">2FA</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                        </ul>
-                      </div>
-                    </li>
-                    <li class="nav-item"><a class="nav-link dropdown-indicator" href="#nv-split"
-                        data-bs-toggle="collapse" aria-expanded="false" aria-controls="nv-split">
-                        <div class="d-flex align-items-center">
-                          <div class="dropdown-indicator-icon-wrapper"><span
-                              class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                            class="nav-link-text">Split</span>
-                        </div>
-                      </a><!-- more inner pages-->
-                      <div class="parent-wrapper">
-                        <ul class="nav collapse parent" data-bs-parent="#authentication" id="nv-split">
-                          <li class="nav-item"><a class="nav-link" href="/auth/sign-in">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Sign in</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/sign-up">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Sign up</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/sign-out">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Sign out</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link"
-                              href="/auth/forgot-password">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Forgot password</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link"
-                              href="/auth/reset-password">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Reset password</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/lock-screen">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Lock screen</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/2fa">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">2FA</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                        </ul>
-                      </div>
-                    </li>
-                    <li class="nav-item"><a class="nav-link dropdown-indicator" href="#nv-Card"
-                        data-bs-toggle="collapse" aria-expanded="false" aria-controls="nv-Card">
-                        <div class="d-flex align-items-center">
-                          <div class="dropdown-indicator-icon-wrapper"><span
-                              class="fas fa-caret-right dropdown-indicator-icon"></span></div><span
-                            class="nav-link-text">Card</span>
-                        </div>
-                      </a><!-- more inner pages-->
-                      <div class="parent-wrapper">
-                        <ul class="nav collapse parent" data-bs-parent="#authentication" id="nv-Card">
-                          <li class="nav-item"><a class="nav-link" href="/auth/sign-in">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Sign in</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/sign-up">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Sign up</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/sign-out">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Sign out</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link"
-                              href="/auth/forgot-password">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Forgot password</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/reset-password">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Reset password</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/lock-screen">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">Lock screen</span>
-                              </div>
-                            </a><!-- more inner pages-->
-                          </li>
-                          <li class="nav-item"><a class="nav-link" href="/auth/2fa">
-                              <div class="d-flex align-items-center"><span class="nav-link-text">2FA</span></div>
-                            </a><!-- more inner pages-->
-                          </li>
-                        </ul>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="navbar-vertical-footer"><button
-          class="btn navbar-vertical-toggle border-0 fw-semibold w-100 white-space-nowrap d-flex align-items-center"><span
-            class="uil uil-left-arrow-to-left fs-8"></span><span class="uil uil-arrow-from-right fs-8"></span><span
-            class="navbar-vertical-footer-text ms-2">Collapsed View</span></button></div>
-    </nav>`;
+const mkItem = (href, text) => `<li class="nav-item"><a class="nav-link" href="${href}"><div class="d-flex align-items-center"><span class="nav-link-text">${text}</span></div></a></li>`;
+const mkGroup = (id, icon, label, items, expanded) => `<div class="nav-item-wrapper"><a class="nav-link dropdown-indicator label-1" href="#nv-${id}" role="button" data-bs-toggle="collapse" aria-expanded="${expanded?'true':'false'}" aria-controls="nv-${id}"><div class="d-flex align-items-center"><div class="dropdown-indicator-icon-wrapper"><span class="fas fa-caret-right dropdown-indicator-icon"></span></div><span class="nav-link-icon"><span data-feather="${icon}"></span></span><span class="nav-link-text">${label}</span></div></a><div class="parent-wrapper label-1"><ul class="nav collapse parent${expanded?' show':''}" data-bs-parent="#navbarVerticalCollapse" id="nv-${id}"><li class="collapsed-nav-item-title d-none">${label}</li>${items}</ul></div></div>`;
+const mkDirect = (href, icon, text) => `<div class="nav-item-wrapper"><a class="nav-link label-1" href="${href}" role="button" data-bs-toggle="" aria-expanded="false"><div class="d-flex align-items-center"><span class="nav-link-icon"><span data-feather="${icon}"></span></span><span class="nav-link-text-wrapper"><span class="nav-link-text">${text}</span></span></div></a></div>`;
+const mkLabel = (text) => `<p class="navbar-vertical-label">${text}</p><hr class="navbar-vertical-line" />`;
+
+const sidebarHtml = `<nav class="navbar navbar-vertical navbar-expand-lg" style="display:none;">
+  <div class="collapse navbar-collapse" id="navbarVerticalCollapse">
+    <div class="navbar-vertical-content">
+      <ul class="navbar-nav flex-column" id="navbarVerticalNav">
+        <li class="nav-item">
+          ${mkDirect('/', 'pie-chart', 'Dashboard')}
+        </li>
+        <li class="nav-item">
+          ${mkLabel('Pet Shop')}
+          ${mkGroup('pets', 'heart', 'Pet Management', [
+            mkItem('/pets', 'All Pets'),
+            mkItem('/pets/add', 'Add New Pet'),
+            mkItem('/pets/categories', 'Categories'),
+            mkItem('/pets/breeds', 'Breeds'),
+            mkItem('/pets/health-records', 'Health Records'),
+          ].join(''), false)}
+          ${mkGroup('products', 'package', 'Products', [
+            mkItem('/products', 'All Products'),
+            mkItem('/products/add', 'Add Product'),
+            mkItem('/products/categories', 'Categories'),
+            mkItem('/products/brands', 'Brands'),
+            mkItem('/products/attributes', 'Attributes'),
+          ].join(''), false)}
+          ${mkGroup('orders', 'shopping-cart', 'Orders', [
+            mkItem('/orders', 'All Orders'),
+            mkItem('/orders/pending', 'Pending'),
+            mkItem('/orders/processing', 'Processing'),
+            mkItem('/orders/shipped', 'Shipped'),
+            mkItem('/orders/delivered', 'Delivered'),
+            mkItem('/orders/cancelled', 'Cancelled/Refunded'),
+          ].join(''), false)}
+          ${mkGroup('customers', 'users', 'Customers', [
+            mkItem('/customers', 'All Customers'),
+            mkItem('/customers/add', 'Add Customer'),
+            mkItem('/customers/groups', 'Customer Groups'),
+            mkItem('/customers/reviews', 'Reviews'),
+          ].join(''), false)}
+          ${mkGroup('inventory', 'database', 'Inventory', [
+            mkItem('/inventory', 'Stock Overview'),
+            mkItem('/inventory/alerts', 'Stock Alerts'),
+            mkItem('/inventory/history', 'Stock History'),
+            mkItem('/inventory/suppliers', 'Suppliers'),
+            mkItem('/inventory/purchase-orders', 'Purchase Orders'),
+          ].join(''), false)}
+        </li>
+        <li class="nav-item">
+          ${mkLabel('Analytics & Marketing')}
+          ${mkGroup('reports', 'bar-chart-2', 'Reports', [
+            mkItem('/reports/sales', 'Sales Report'),
+            mkItem('/reports/products', 'Product Report'),
+            mkItem('/reports/customers', 'Customer Report'),
+            mkItem('/reports/inventory', 'Inventory Report'),
+            mkItem('/reports/tax', 'Tax Report'),
+          ].join(''), false)}
+          ${mkGroup('marketing', 'trending-up', 'Marketing', [
+            mkItem('/marketing/coupons', 'Coupons/Discounts'),
+            mkItem('/marketing/campaigns', 'Email Campaigns'),
+            mkItem('/marketing/banners', 'Banners/Sliders'),
+            mkItem('/marketing/notifications', 'Push Notifications'),
+          ].join(''), false)}
+        </li>
+        <li class="nav-item">
+          ${mkLabel('Content & System')}
+          ${mkGroup('content', 'file-text', 'Content', [
+            mkItem('/content/pages', 'Pages'),
+            mkItem('/content/blog', 'Blog Posts'),
+            mkItem('/content/pet-care', 'Pet Care Guides'),
+            mkItem('/content/faqs', 'FAQs'),
+            mkItem('/content/testimonials', 'Testimonials'),
+          ].join(''), false)}
+          ${mkGroup('settings', 'settings', 'Settings', [
+            mkItem('/settings/general', 'General'),
+            mkItem('/settings/payments', 'Payment Gateways'),
+            mkItem('/settings/shipping', 'Shipping Methods'),
+            mkItem('/settings/tax', 'Tax Settings'),
+            mkItem('/settings/email-templates', 'Email Templates'),
+            mkItem('/settings/notifications', 'Notifications'),
+            mkItem('/settings/roles', 'Roles & Permissions'),
+            mkItem('/settings/logs', 'System Logs'),
+          ].join(''), false)}
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="navbar-vertical-footer"><button class="btn navbar-vertical-toggle border-0 fw-semibold w-100 white-space-nowrap d-flex align-items-center"><span class="uil uil-left-arrow-to-left fs-8"></span><span class="uil uil-arrow-from-right fs-8"></span><span class="navbar-vertical-footer-text ms-2">Collapsed View</span></button></div>
+</nav>`;
 const navbarHtml = `    <nav class="navbar navbar-top fixed-top navbar-expand" id="navbarDefault" style="display:none;">
       <div class="collapse navbar-collapse justify-content-between">
         <div class="navbar-logo">
@@ -876,13 +536,13 @@ const navbarHtml = `    <nav class="navbar navbar-top fixed-top navbar-expand" i
                 </div>
                 <div class="overflow-auto scrollbar" style="height: 10rem;">
                   <ul class="nav d-flex flex-column mb-2 pb-1">
-                    <li class="nav-item"><a class="nav-link px-3 d-block" href="#!"> <span
+                    <li class="nav-item"><a class="nav-link px-3 d-block" href="/apps/social/profile"> <span
                           class="me-2 text-body align-bottom" data-feather="user"></span><span>Profile</span></a></li>
-                    <li class="nav-item"><a class="nav-link px-3 d-block" href="#!"><span
+                    <li class="nav-item"><a class="nav-link px-3 d-block" href="/"><span
                           class="me-2 text-body align-bottom" data-feather="pie-chart"></span>Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link px-3 d-block" href="#!"> <span
                           class="me-2 text-body align-bottom" data-feather="lock"></span>Posts &amp; Activity</a></li>
-                    <li class="nav-item"><a class="nav-link px-3 d-block" href="#!"> <span
+                    <li class="nav-item"><a class="nav-link px-3 d-block" href="/apps/social/settings"> <span
                           class="me-2 text-body align-bottom" data-feather="settings"></span>Settings &amp; Privacy </a>
                     </li>
                     <li class="nav-item"><a class="nav-link px-3 d-block" href="#!"> <span
@@ -898,7 +558,7 @@ const navbarHtml = `    <nav class="navbar navbar-top fixed-top navbar-expand" i
                     </li>
                   </ul>
                   <hr />
-                  <div class="px-3"> <a class="btn btn-phoenix-secondary d-flex flex-center w-100" href="#!"> <span
+                  <div class="px-3"> <a class="btn btn-phoenix-secondary d-flex flex-center w-100" href="/auth/sign-out"> <span
                         class="me-2" data-feather="log-out"> </span>Sign out</a></div>
                   <div class="my-2 text-center fw-bold fs-10 text-body-quaternary"><a class="text-body-quaternary me-1"
                       href="#!">Privacy policy</a>&bull;<a class="text-body-quaternary mx-1" href="#!">Terms</a>&bull;<a

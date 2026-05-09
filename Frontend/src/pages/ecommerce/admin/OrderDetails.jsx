@@ -1,391 +1,244 @@
 import { useEffect } from 'react';
 import usePhoenixInit from '../../../hooks/usePhoenixInit';
+import { ordersData, formatCurrency } from './petShopData';
 
-const pageHtml = `<nav class="mb-3" aria-label="breadcrumb">
-          <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="#!">Page 1</a></li>
-            <li class="breadcrumb-item"><a href="#!">Page 2</a></li>
-            <li class="breadcrumb-item active">Default</li>
-          </ol>
-        </nav>
-        <div class="mb-9">
-          <h2 class="mb-0">Order <span>#349</span></h2>
-          <div class="d-sm-flex flex-between-center mb-3">
-            <p class="text-body-secondary lh-sm mb-0 mt-2 mt-sm-0">Customer ID : <a class="fw-bold" href="#!"> 2364847</a></p>
-            <div class="d-flex"><button class="btn btn-link pe-3 ps-0 text-body"><span class="fas fa-print me-2"></span>Print</button>
-              <button class="btn btn-link px-3 text-body"><span class="fas fa-undo me-2"></span>Refund</button>
-              <div class="dropdown"><button class="btn text-body dropdown-toggle dropdown-caret-none ps-3 pe-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">More action<span class="fas fa-chevron-down ms-2"></span></button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                  <li><a class="dropdown-item" href="#">Action</a></li>
-                  <li><a class="dropdown-item" href="#">Another action</a></li>
-                  <li><a class="dropdown-item" href="#">Something else here</a></li>
-                </ul>
-              </div>
+export default function OrderDetails() {
+  usePhoenixInit();
+  useEffect(() => { if (window.feather) window.feather.replace(); });
+
+  // Use first order as demo
+  const order = ordersData[0];
+
+  const subtotal = order.items.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const shipping = 99;
+  const tax = Math.round(subtotal * 0.18);
+  const discount = 0;
+  const grandTotal = subtotal + shipping + tax - discount;
+
+  const timeline = [
+    { status: 'Order Placed', date: order.date, icon: 'shopping-cart', color: 'success', desc: 'Order was placed by the customer' },
+    { status: 'Payment Confirmed', date: 'May 5, 1:00 PM', icon: 'credit-card', color: 'success', desc: 'Payment of ' + formatCurrency(order.total) + ' received' },
+    { status: 'Order Shipped', date: 'May 6, 9:30 AM', icon: 'truck', color: 'info', desc: 'Package dispatched via BlueDart — Tracking: BD987654321' },
+    { status: 'Delivered', date: 'May 7, 2:15 PM', icon: 'check-circle', color: 'success', desc: 'Package delivered successfully' },
+  ];
+
+  return (
+    <>
+      <nav className="mb-3" aria-label="breadcrumb">
+        <ol className="breadcrumb mb-0">
+          <li className="breadcrumb-item"><a href="/">Pet Shop</a></li>
+          <li className="breadcrumb-item"><a href="/pet-shop/orders">Orders</a></li>
+          <li className="breadcrumb-item active">Order details</li>
+        </ol>
+      </nav>
+
+      <div className="mb-9">
+        {/* Order Header */}
+        <div className="row g-3 mb-4 align-items-center">
+          <div className="col">
+            <h2 className="mb-1">Order {order.id}</h2>
+            <div className="d-flex flex-wrap gap-2 align-items-center">
+              <span className="text-body-tertiary">{order.date}</span>
+              <span className={`badge badge-phoenix fs-10 ${order.paymentStatus.type}`}>
+                <span className="badge-label">{order.paymentStatus.label}</span>
+                <span className="ms-1" data-feather={order.paymentStatus.icon} style={{height: '12.8px', width: '12.8px'}}></span>
+              </span>
+              <span className={`badge badge-phoenix fs-10 ${order.fulfillmentStatus.type}`}>
+                <span className="badge-label">{order.fulfillmentStatus.label}</span>
+                <span className="ms-1" data-feather={order.fulfillmentStatus.icon} style={{height: '12.8px', width: '12.8px'}}></span>
+              </span>
             </div>
           </div>
-          <div class="row g-5 gy-7">
-            <div class="col-12 col-xl-8 col-xxl-9">
-              <div id="orderTable" data-list='{"valueNames":["products","color","size","price","quantity","total"],"page":10}'>
-                <div class="table-responsive scrollbar">
-                  <table class="table fs-9 mb-0 border-top border-translucent">
+          <div className="col-auto">
+            <button className="btn btn-phoenix-secondary me-2"><span className="fas fa-print me-1"></span>Print</button>
+            <button className="btn btn-phoenix-primary me-2"><span className="fas fa-undo me-1"></span>Refund</button>
+            <button className="btn btn-primary"><span className="fas fa-check me-1"></span>Update Status</button>
+          </div>
+        </div>
+
+        <div className="row g-3">
+          {/* Left Column */}
+          <div className="col-12 col-xl-8">
+            {/* Order Items */}
+            <div className="card mb-3">
+              <div className="card-body">
+                <h4 className="mb-4"><span className="fas fa-box me-2 text-primary"></span>Order Items</h4>
+                <div className="table-responsive">
+                  <table className="table table-sm fs-9 mb-0">
                     <thead>
                       <tr>
-                        <th class="sort white-space-nowrap align-middle fs-10" scope="col"></th>
-                        <th class="sort white-space-nowrap align-middle" scope="col" style="min-width:400px;" data-sort="products">PRODUCTS</th>
-                        <th class="sort align-middle ps-4" scope="col" data-sort="color" style="width:150px;">COLOR</th>
-                        <th class="sort align-middle ps-4" scope="col" data-sort="size" style="width:300px;">SIZE</th>
-                        <th class="sort align-middle text-end ps-4" scope="col" data-sort="price" style="width:150px;">PRICE</th>
-                        <th class="sort align-middle text-end ps-4" scope="col" data-sort="quantity" style="width:200px;">QUANTITY</th>
-                        <th class="sort align-middle text-end ps-4" scope="col" data-sort="total" style="width:250px;">TOTAL</th>
+                        <th className="text-body-highlight" style={{width: '50%'}}>PRODUCT</th>
+                        <th className="text-body-highlight text-center">QTY</th>
+                        <th className="text-body-highlight text-end">UNIT PRICE</th>
+                        <th className="text-body-highlight text-end">TOTAL</th>
                       </tr>
                     </thead>
-                    <tbody class="list" id="order-table-body">
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/1.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">Fitbit Sense Advanced Smartwatch with Tools for Heart Health, Stress Management &amp; Skin Temperature Trends, Carbon/Graphite, One Size (S &amp; L Bands)</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Pure matte black</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">42</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$57</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">4</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$228</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/2.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">iPhone 13 pro max-Pacific Blue-128GB storage</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Glossy black</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">XL</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$199</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">2</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$398</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/3.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">Apple MacBook Pro 13 inch-M1-8/256GB-space</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Glossy black</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">L</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$600</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">1</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$600</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/4.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">Apple iMac 24&quot; 4K Retina Display M1 8 Core CPU, 7 Core GPU, 256GB SSD, Green (MJV83ZP/A) 2021</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Gray</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">22</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$250</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">2</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$500</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/5.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">Razer Kraken v3 x Wired 7.1 Surroung Sound Gaming headset</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Black</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">L</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$49</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">3</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$147</td>
-                      </tr>
-                      <tr class="hover-actions-trigger btn-reveal-trigger position-static">
-                        <td class="align-middle white-space-nowrap py-2"><a class="d-block border border-translucent rounded-2" href="../landing/product-details"><img src="/assets/img/products/6.png" alt="" width="53" /></a></td>
-                        <td class="products align-middle py-0"><a class="fw-semibold line-clamp-2 mb-0" href="../landing/product-details">PlayStation 5 DualSense Wireless Controller</a></td>
-                        <td class="color align-middle white-space-nowrap text-body py-0 ps-4">Green Golden</td>
-                        <td class="size align-middle white-space-nowrap text-body-tertiary fw-semibold py-0 ps-4">Regular</td>
-                        <td class="price align-middle text-body fw-semibold text-end py-0 ps-4">$65</td>
-                        <td class="quantity align-middle text-end py-0 ps-4 text-body-tertiary">2</td>
-                        <td class="total align-middle fw-bold text-body-highlight text-end py-0 ps-4">$130</td>
-                      </tr>
+                    <tbody>
+                      {order.items.map((item, idx) => (
+                        <tr key={idx}>
+                          <td className="align-middle">
+                            <div className="d-flex align-items-center">
+                              <span className="me-2 fs-5">🐾</span>
+                              <div>
+                                <h6 className="mb-0 text-body-highlight">{item.name}</h6>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="align-middle text-center fw-semibold text-body-highlight">{item.qty}</td>
+                          <td className="align-middle text-end text-body-tertiary">{formatCurrency(item.price)}</td>
+                          <td className="align-middle text-end fw-bold text-body-emphasis">{formatCurrency(item.price * item.qty)}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
-              </div>
-              <div class="d-flex flex-between-center py-3 border-bottom border-translucent mb-6">
-                <p class="text-body-emphasis fw-semibold lh-sm mb-0">Items subtotal :</p>
-                <p class="text-body-emphasis fw-bold lh-sm mb-0">$1690</p>
-              </div>
-              <div class="row gx-4 gy-6 g-xl-7 justify-content-sm-center justify-content-xl-start">
-                <div class="col-12 col-sm-auto">
-                  <h4 class="mb-5">Billing details</h4>
-                  <div class="row g-4 flex-sm-column">
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="user" style="stroke-width:2.5;"></span>
-                        <h6 class="mb-0">Customer</h6>
-                      </div><a class="d-block fs-9 ms-4" href="#!">Shatinon Mekalan</a>
-                    </div>
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="mail" style="stroke-width:2.5;"></span>
-                        <h6 class="mb-0">Email</h6>
-                      </div><a class="d-block fs-9 ms-4" href="mailto:shatinon@jeemail.com:">shatinon@jeemail.com</a>
-                    </div>
-                    <div class="col-6 col-sm-12 order-sm-1">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="home" style="stroke-width:2.5;"></span>
-                        <h6 class="mb-0">Address</h6>
+
+                {/* Order Summary */}
+                <div className="border-top border-translucent mt-4 pt-4">
+                  <div className="row justify-content-end">
+                    <div className="col-sm-6 col-md-5 col-lg-4">
+                      <div className="d-flex justify-content-between mb-2">
+                        <h6 className="mb-0 text-body-highlight">Subtotal</h6>
+                        <p className="mb-0 text-body-tertiary">{formatCurrency(subtotal)}</p>
                       </div>
-                      <div class="ms-4">
-                        <p class="text-body-secondary mb-0 fs-9">Shatinon Mekalan</p>
-                        <p class="text-body-secondary mb-0 fs-9">Vancouver, British Columbia,<br class="d-none d-sm-block" />Canada</p>
+                      <div className="d-flex justify-content-between mb-2">
+                        <h6 className="mb-0 text-body-highlight">Shipping</h6>
+                        <p className="mb-0 text-body-tertiary">{formatCurrency(shipping)}</p>
                       </div>
-                    </div>
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="phone" style="stroke-width:2.5;">  </span>
-                        <h6 class="mb-0">Phone</h6>
-                      </div><a class="d-block fs-9 ms-4" href="tel:+1234567890">+1234567890</a>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-12 col-sm-auto">
-                  <h4 class="mb-5">Shipping details</h4>
-                  <div class="row g-4 flex-sm-column">
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="mail" style="stroke-width:2.5;">  </span>
-                        <h6 class="mb-0">Email</h6>
-                      </div><a class="d-block fs-9 ms-4" href="mailto:shatinon@jeemail.com:">shatinon@jeemail.com</a>
-                    </div>
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="phone" style="stroke-width:2.5;">  </span>
-                        <h6 class="mb-0">Phone</h6>
-                      </div><a class="d-block fs-9 ms-4" href="tel:+1234567890">+1234567890</a>
-                    </div>
-                    <div class="col-6 col-sm-12 order-sm-1">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="home" style="stroke-width:2.5;">  </span>
-                        <h6 class="mb-0">Address</h6>
+                      <div className="d-flex justify-content-between mb-2">
+                        <h6 className="mb-0 text-body-highlight">Tax (18% GST)</h6>
+                        <p className="mb-0 text-body-tertiary">{formatCurrency(tax)}</p>
                       </div>
-                      <div class="ms-4">
-                        <p class="text-body-secondary mb-0 fs-9">Shatinon Mekalan</p>
-                        <p class="text-body-secondary mb-0 fs-9">Vancouver, British Columbia <br />Canada</p>
-                      </div>
-                    </div>
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="calendar" style="stroke-width:2.5;"></span>
-                        <h6 class="mb-0">Shipping Date</h6>
-                      </div>
-                      <p class="mb-0 text-body-secondary fs-9 ms-4">12 Nov, 2021</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-12 col-sm-auto">
-                  <h4 class="mb-5">Other details</h4>
-                  <div class="row g-4 flex-sm-column">
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="shopping-bag" style="stroke-width:2.5;"></span>
-                        <h6 class="mb-0">Gift order</h6>
-                      </div>
-                      <p class="mb-0 text-body-secondary fs-9 ms-4">Yes</p>
-                    </div>
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="package" style="stroke-width:2.5;">  </span>
-                        <h6 class="mb-0">Wraping</h6>
-                      </div>
-                      <p class="mb-0 text-body-secondary fs-9 ms-4">Magic wrapper</p>
-                    </div>
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="file-text" style="stroke-width:2.5;">  </span>
-                        <h6 class="mb-0">Recipient</h6>
-                      </div>
-                      <p class="mb-0 text-body-secondary fs-9 ms-4">Monjito Shiniga</p>
-                    </div>
-                    <div class="col-6 col-sm-12">
-                      <div class="d-flex align-items-center mb-1"><span class="me-2" data-feather="mail" style="stroke-width:2.5;">  </span>
-                        <h6 class="mb-0">Gift Meaasge</h6>
-                      </div>
-                      <div class="ms-4">
-                        <p class="text-body-secondary fs-9 mb-0">Happy Birthday Shiniga <br />Lots of Love Buga Buga!!</p>
-                        <p class="mb-0 text-body-secondary fs-9">Yours, <br />Mekalan</p>
+                      {discount > 0 && (
+                        <div className="d-flex justify-content-between mb-2">
+                          <h6 className="mb-0 text-success">Discount</h6>
+                          <p className="mb-0 text-success">-{formatCurrency(discount)}</p>
+                        </div>
+                      )}
+                      <div className="border-top border-translucent pt-3 mt-3">
+                        <div className="d-flex justify-content-between">
+                          <h5 className="mb-0 text-body-emphasis">Grand Total</h5>
+                          <h5 className="mb-0 text-body-emphasis">{formatCurrency(grandTotal)}</h5>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="col-12 col-xl-4 col-xxl-3">
-              <div class="row">
-                <div class="col-12">
-                  <div class="card mb-3">
-                    <div class="card-body">
-                      <h3 class="card-title mb-4">Summary</h3>
-                      <div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Items subtotal :</p>
-                          <p class="text-body-emphasis fw-semibold">$691</p>
+
+            {/* Order Timeline */}
+            <div className="card">
+              <div className="card-body">
+                <h4 className="mb-4"><span className="fas fa-history me-2 text-primary"></span>Order Timeline</h4>
+                {timeline.map((step, idx) => (
+                  <div key={idx} className={`d-flex ${idx < timeline.length - 1 ? 'mb-4 pb-4 border-bottom border-translucent' : ''}`}>
+                    <div className="flex-shrink-0 me-3">
+                      <div className="avatar avatar-s">
+                        <div className={`avatar-name rounded-circle bg-${step.color}-subtle text-${step.color}`}>
+                          <span data-feather={step.icon} style={{height: 14, width: 14}}></span>
                         </div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Discount :</p>
-                          <p class="text-danger fw-semibold">-$59</p>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Tax :</p>
-                          <p class="text-body-emphasis fw-semibold">$126.20</p>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Subtotal :</p>
-                          <p class="text-body-emphasis fw-semibold">$665</p>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                          <p class="text-body fw-semibold">Shipping Cost :</p>
-                          <p class="text-body-emphasis fw-semibold">$30</p>
-                        </div>
-                      </div>
-                      <div class="d-flex justify-content-between border-top border-translucent border-dashed pt-4">
-                        <h4 class="mb-0">Total :</h4>
-                        <h4 class="mb-0">$695.20</h4>
                       </div>
                     </div>
+                    <div className="flex-1">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <h6 className="mb-0 text-body-highlight">{step.status}</h6>
+                        <p className="mb-0 fs-10 text-body-quaternary">{step.date}</p>
+                      </div>
+                      <p className="mb-0 fs-9 text-body-tertiary mt-1">{step.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="col-12 col-xl-4">
+            {/* Customer Info */}
+            <div className="card mb-3">
+              <div className="card-body">
+                <h4 className="mb-4"><span className="fas fa-user me-2 text-primary"></span>Customer</h4>
+                <div className="d-flex align-items-center mb-3">
+                  {order.customer.avatar ? (
+                    <div className="avatar avatar-xl me-3"><img className="rounded-circle" src={order.customer.avatar} alt="" /></div>
+                  ) : (
+                    <div className="avatar avatar-xl me-3">
+                      <div className="avatar-name rounded-circle"><span>{order.customer.name.charAt(0)}</span></div>
+                    </div>
+                  )}
+                  <div>
+                    <h5 className="mb-0"><a href="/pet-shop/customer-details">{order.customer.name}</a></h5>
+                    <p className="mb-0 text-body-tertiary fs-10">Gold Member</p>
                   </div>
                 </div>
-                <div class="col-12">
-                  <div class="card">
-                    <div class="card-body">
-                      <h3 class="card-title mb-4">Order Status</h3>
-                      <h6 class="mb-2">Payment status</h6><select class="form-select mb-4" aria-label="delivery type">
-                        <option value="cod">Processing</option>
-                        <option value="card">Canceled</option>
-                        <option value="paypal">Completed</option>
-                      </select>
-                      <h6 class="mb-2">Fulfillment status</h6><select class="form-select" aria-label="delivery type">
-                        <option value="cod">Unfulfilled</option>
-                        <option value="card">Fulfilled</option>
-                        <option value="paypal">Pending</option>
-                      </select>
-                    </div>
+                <div className="border-top border-translucent pt-3">
+                  <div className="mb-2">
+                    <span className="fas fa-envelope me-2 text-body-quaternary"></span>
+                    <span className="text-body-tertiary fs-9">priya.sharma@gmail.com</span>
                   </div>
+                  <div className="mb-2">
+                    <span className="fas fa-phone me-2 text-body-quaternary"></span>
+                    <span className="text-body-tertiary fs-9">+91 98765 43210</span>
+                  </div>
+                  <div>
+                    <span className="fas fa-paw me-2 text-body-quaternary"></span>
+                    <span className="text-body-tertiary fs-9">Dog Owner — Bruno (Golden Retriever)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Shipping Info */}
+            <div className="card mb-3">
+              <div className="card-body">
+                <h4 className="mb-4"><span className="fas fa-truck me-2 text-primary"></span>Shipping Details</h4>
+                <div className="mb-3">
+                  <h6 className="mb-1 text-body-highlight">Delivery Type</h6>
+                  <p className="mb-0 text-body-tertiary">{order.deliveryType}</p>
+                </div>
+                <div className="mb-3">
+                  <h6 className="mb-1 text-body-highlight">Shipping Address</h6>
+                  <p className="mb-0 text-body-tertiary">42 Anna Nagar, Chennai 600040, Tamil Nadu, India</p>
+                </div>
+                <div className="mb-3">
+                  <h6 className="mb-1 text-body-highlight">Tracking Number</h6>
+                  <p className="mb-0">
+                    <a className="fw-semibold" href="#!">BD987654321</a>
+                    <span className="badge badge-phoenix badge-phoenix-info ms-2 fs-10">BlueDart</span>
+                  </p>
+                </div>
+                <div>
+                  <h6 className="mb-1 text-body-highlight">Estimated Delivery</h6>
+                  <p className="mb-0 text-body-tertiary">May 7, 2025 — May 9, 2025</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Info */}
+            <div className="card">
+              <div className="card-body">
+                <h4 className="mb-4"><span className="fas fa-credit-card me-2 text-primary"></span>Payment</h4>
+                <div className="mb-3">
+                  <h6 className="mb-1 text-body-highlight">Payment Method</h6>
+                  <p className="mb-0 text-body-tertiary">UPI — PhonePe</p>
+                </div>
+                <div className="mb-3">
+                  <h6 className="mb-1 text-body-highlight">Transaction ID</h6>
+                  <p className="mb-0 text-body-tertiary fw-semibold">TXN-2025050512560001</p>
+                </div>
+                <div>
+                  <h6 className="mb-1 text-body-highlight">Payment Status</h6>
+                  <span className={`badge badge-phoenix fs-10 ${order.paymentStatus.type}`}>
+                    <span className="badge-label">{order.paymentStatus.label}</span>
+                    <span className="ms-1" data-feather={order.paymentStatus.icon} style={{height: '12.8px', width: '12.8px'}}></span>
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <footer class="footer position-absolute">
-          <div class="row g-0 justify-content-between align-items-center h-100">
-            <div class="col-12 col-sm-auto text-center">
-              <p class="mb-0 mt-2 mt-sm-0 text-body">Thank you for creating with Phoenix<span class="d-none d-sm-inline-block"></span><span class="d-none d-sm-inline-block mx-1">|</span><br class="d-sm-none" />2025 &copy;<a class="mx-1" href="https://themewagon.com/">Themewagon</a></p>
-            </div>
-            <div class="col-12 col-sm-auto text-center">
-              <p class="mb-0 text-body-tertiary text-opacity-85">v1.24.0</p>
-            </div>
-          </div>
-        </footer>
       </div>
-      <div class="modal fade" id="searchBoxModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="true" data-phoenix-modal="data-phoenix-modal" style="--phoenix-backdrop-opacity: 1;">
-        <div class="modal-dialog">
-          <div class="modal-content mt-15 rounded-pill">
-            <div class="modal-body p-0">
-              <div class="search-box navbar-top-search-box" data-list='{"valueNames":["title"]}' style="width: auto;">
-                <form class="position-relative" data-bs-toggle="search" data-bs-display="static"><input class="form-control search-input fuzzy-search rounded-pill form-control-lg" type="search" placeholder="Search..." aria-label="Search" />
-                  <span class="fas fa-search search-box-icon"></span>
-                </form>
-                <div class="btn-close position-absolute end-0 top-50 translate-middle cursor-pointer shadow-none" data-bs-dismiss="search"><button class="btn btn-link p-0" aria-label="Close"></button></div>
-                <div class="dropdown-menu border start-0 py-0 overflow-hidden w-100">
-                  <div class="scrollbar-overlay" style="max-height: 30rem;">
-                    <div class="list pb-3">
-                      <h6 class="dropdown-header text-body-highlight fs-10 py-2">24 <span class="text-body-quaternary">results</span></h6>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Recently Searched </h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-clock-rotate-left" data-fa-transform="shrink-2"></span> Store Macbook</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-clock-rotate-left" data-fa-transform="shrink-2"></span> MacBook Air - 13″</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Products</h6>
-                      <div class="py-2"><a class="dropdown-item py-2 d-flex align-items-center" href="../landing/product-details">
-                          <div class="file-thumbnail me-2"><img class="h-100 w-100 object-fit-cover rounded-3" src="/assets/img/products/60x60/3.png" alt="" /></div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">MacBook Air - 13″</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary"><span class="fw-medium text-body-tertiary text-opactity-85">8GB Memory - 1.6GHz - 128GB Storage</span></p>
-                          </div>
-                        </a>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="../landing/product-details">
-                          <div class="file-thumbnail me-2"><img class="img-fluid" src="/assets/img/products/60x60/3.png" alt="" /></div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">MacBook Pro - 13″</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary"><span class="fw-medium text-body-tertiary text-opactity-85">30 Sep at 12:30 PM</span></p>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Quick Links</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-link text-body" data-fa-transform="shrink-2"></span> Support MacBook House</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-link text-body" data-fa-transform="shrink-2"></span> Store MacBook″</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Files</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-solid fa-file-zipper text-body" data-fa-transform="shrink-2"></span> Library MacBook folder.rar</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-file-lines text-body" data-fa-transform="shrink-2"></span> Feature MacBook extensions.txt</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-solid fa-image text-body" data-fa-transform="shrink-2"></span> MacBook Pro_13.jpg</div>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Members</h6>
-                      <div class="py-2"><a class="dropdown-item py-2 d-flex align-items-center" href="/members">
-                          <div class="avatar avatar-l status-online  me-2 text-body">
-                            <img class="rounded-circle " src="/assets/img/team/40x40/10.webp" alt="" />
-                          </div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">Carry Anna</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary">anna@technext.it</p>
-                          </div>
-                        </a>
-                        <a class="dropdown-item py-2 d-flex align-items-center" href="/members">
-                          <div class="avatar avatar-l  me-2 text-body">
-                            <img class="rounded-circle " src="/assets/img/team/40x40/12.webp" alt="" />
-                          </div>
-                          <div class="flex-1">
-                            <h6 class="mb-0 text-body-highlight title">John Smith</h6>
-                            <p class="fs-10 mb-0 d-flex text-body-tertiary">smith@technext.it</p>
-                          </div>
-                        </a>
-                      </div>
-                      <hr class="my-0" />
-                      <h6 class="dropdown-header text-body-highlight fs-9 border-bottom border-translucent py-2 lh-sm">Related Searches</h6>
-                      <div class="py-2"><a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"><span class="fa-brands fa-firefox-browser text-body" data-fa-transform="shrink-2"></span> Search in the Web MacBook</div>
-                          </div>
-                        </a>
-                        <a class="dropdown-item" href="../landing/product-details">
-                          <div class="d-flex align-items-center">
-                            <div class="fw-normal text-body-highlight title"> <span class="fa-brands fa-chrome text-body" data-fa-transform="shrink-2"></span> Store MacBook″</div>
-                          </div>
-                        </a>
-                      </div>
-                    </div>
-                    <div class="text-center">
-                      <p class="fallback fw-bold fs-7 d-none">No Result Found.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>`;
-
-export default function OrderDetails() {
-  usePhoenixInit();
-
-  useEffect(() => {
-    if (window.feather) window.feather.replace();
-  }, []);
-
-  return <div dangerouslySetInnerHTML={{ __html: pageHtml }} style={{ display: "contents" }} />;
+    </>
+  );
 }
