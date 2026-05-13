@@ -28,15 +28,17 @@ This dashboard is designed for managing products, orders, users, analytics, and 
 ## 📸 Screenshots
 
 ### Dashboard Overview
-![Dashboard](public/assets/img/sections/demo-1.webp)
+![Dashboard](Frontend/public/assets/img/sections/module-1.png)
 
-![Dashboard](public/assets/img/sections/demo.webp)
+![Dashboard](Frontend/public/assets/img/sections/demo-1.webp)
+
+![Dashboard](Frontend/public/assets/img/sections/demo.webp)
 
 ### Product Management
-![Products](public/assets/img/sections/module-4.png)
+![Products](Frontend/public/assets/img/sections/module-4.png)
 
 ### Profile Page
-![Profile](public/assets/img/sections/module-23.png)
+![Profile](Frontend/public/assets/img/sections/module-23.png)
 
 ---
 
