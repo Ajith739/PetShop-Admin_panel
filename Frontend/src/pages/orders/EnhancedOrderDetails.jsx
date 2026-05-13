@@ -1,22 +1,63 @@
-import { useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import usePhoenixInit from '../../hooks/usePhoenixInit';
-import { ordersData, formatCurrency } from '../ecommerce/admin/petShopData';
+import { orderService } from '../../services/api';
 
-const sampleOrder = ordersData[0];
-const timeline = [
-  { stage: 'Order Placed', date: 'May 5, 12:56 PM', status: 'complete', icon: 'fas fa-shopping-cart' },
-  { stage: 'Payment Received', date: 'May 5, 12:58 PM', status: 'complete', icon: 'fas fa-credit-card' },
-  { stage: 'Processing', date: 'May 5, 2:00 PM', status: 'complete', icon: 'fas fa-cog' },
-  { stage: 'Packed', date: 'May 5, 4:30 PM', status: 'complete', icon: 'fas fa-box' },
-  { stage: 'Shipped', date: 'May 6, 9:00 AM', status: 'complete', icon: 'fas fa-truck' },
-  { stage: 'Out for Delivery', date: 'May 7, 10:15 AM', status: 'complete', icon: 'fas fa-motorcycle' },
-  { stage: 'Delivered', date: 'May 7, 2:30 PM', status: 'complete', icon: 'fas fa-check-circle' },
-  { stage: 'Completed', date: 'May 8, 2:30 PM', status: 'current', icon: 'fas fa-flag-checkered' },
-];
+const formatCurrency = (amount) => '₹' + Number(amount).toLocaleString('en-IN');
+
+const STATUS_LABELS = {
+  pending_payment: 'Pending Payment', payment_confirmed: 'Payment Confirmed', processing: 'Processing',
+  packed: 'Packed', shipped: 'Shipped', out_for_delivery: 'Out for Delivery', delivered: 'Delivered',
+  completed: 'Completed', cancelled: 'Cancelled', refunded: 'Refunded', delivery_failed: 'Delivery Failed',
+  exchange_requested: 'Exchange Requested', returned: 'Returned',
+};
+
+const STATUS_FLOW = ['pending_payment', 'payment_confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered', 'completed'];
 
 export default function EnhancedOrderDetails() {
   usePhoenixInit();
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+
+  const fetchOrder = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await orderService.getById(id);
+      setOrder(res.data);
+    } catch (err) {
+      console.error('Failed to fetch order:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => { fetchOrder(); }, [fetchOrder]);
   useEffect(() => { if (window.feather) window.feather.replace(); });
+
+  const handleStatusUpdate = async (newStatus) => {
+    try {
+      setUpdating(true);
+      await orderService.updateStatus(id, newStatus);
+      await fetchOrder();
+    } catch (err) {
+      alert(err.message || 'Failed to update status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="d-flex justify-content-center py-9"><div className="spinner-border text-primary" role="status"></div></div>;
+  }
+
+  if (!order) {
+    return <div className="text-center py-9"><h4>Order not found</h4><a href="/orders" className="btn btn-primary mt-3">Back to Orders</a></div>;
+  }
+
+  const currentIndex = STATUS_FLOW.indexOf(order.status);
 
   return (
     <>
@@ -24,207 +65,137 @@ export default function EnhancedOrderDetails() {
         <ol className="breadcrumb mb-0">
           <li className="breadcrumb-item"><a href="/">Pet Shop</a></li>
           <li className="breadcrumb-item"><a href="/orders">Orders</a></li>
-          <li className="breadcrumb-item active">{sampleOrder.id}</li>
+          <li className="breadcrumb-item active">{order.order_number}</li>
         </ol>
       </nav>
+
       <div className="mb-9">
-        <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <h2 className="mb-1">Order {sampleOrder.id}</h2>
-            <p className="text-body-tertiary mb-0">Placed on {sampleOrder.date}</p>
+            <h2 className="mb-1">Order {order.order_number}</h2>
+            <p className="text-body-tertiary mb-0 fs-9">
+              Placed on {new Date(order.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
           </div>
-          <div className="d-flex gap-2 flex-wrap">
-            <div className="btn-group">
-              <button className="btn btn-phoenix-primary dropdown-toggle" data-bs-toggle="dropdown">Update Status</button>
-              <ul className="dropdown-menu">
-                {['Processing','Packed','Shipped','Out for Delivery','Delivered','Cancelled'].map(s => (
-                  <li key={s}><a className="dropdown-item" href="#">{s}</a></li>
-                ))}
-              </ul>
-            </div>
-            <button className="btn btn-phoenix-secondary"><span className="fas fa-print me-2"></span>Invoice</button>
-            <button className="btn btn-phoenix-secondary"><span className="fas fa-box me-2"></span>Packing Slip</button>
-            <button className="btn btn-phoenix-secondary"><span className="fas fa-envelope me-2"></span>Send Tracking</button>
-            <button className="btn btn-phoenix-danger"><span className="fas fa-times me-2"></span>Cancel</button>
+          <div className="d-flex gap-2">
+            <button className="btn btn-phoenix-secondary" onClick={() => navigate('/orders')}>
+              <span className="fas fa-arrow-left me-2"></span>Back
+            </button>
           </div>
         </div>
 
-        <div className="row g-4">
-          {/* Left Column */}
-          <div className="col-12 col-xl-8">
-            {/* Order Timeline */}
-            <div className="card mb-4 border border-translucent">
-              <div className="card-header"><h5 className="mb-0">📋 Order Timeline</h5></div>
-              <div className="card-body">
-                <div className="d-flex flex-wrap justify-content-between position-relative">
-                  <div className="position-absolute" style={{top: 14, left: '5%', right: '5%', height: 3, background: 'var(--phoenix-border-color)', zIndex: 0}}></div>
-                  {timeline.map((step, i) => (
-                    <div key={i} className="text-center position-relative" style={{zIndex: 1, flex: '1 1 0', minWidth: 80}}>
-                      <div className={`rounded-circle d-inline-flex align-items-center justify-content-center mb-2 ${
-                        step.status === 'complete' ? 'bg-success' : step.status === 'current' ? 'bg-primary' : 'bg-body-secondary'
-                      }`} style={{width: 30, height: 30}}>
-                        <span className={`${step.icon} text-white fs-10`}></span>
-                      </div>
-                      <p className={`mb-0 fs-10 fw-semibold ${step.status === 'current' ? 'text-primary' : step.status === 'complete' ? 'text-success' : 'text-body-tertiary'}`}>{step.stage}</p>
-                      <p className="mb-0 fs-10 text-body-quaternary">{step.date}</p>
-                    </div>
-                  ))}
+        {/* Status Timeline */}
+        <div className="card border border-translucent mb-4">
+          <div className="card-body">
+            <h5 className="mb-3">Order Timeline</h5>
+            <div className="d-flex justify-content-between position-relative mb-3">
+              {STATUS_FLOW.map((status, i) => (
+                <div key={status} className="text-center" style={{flex: 1}}>
+                  <div className={`rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center ${
+                    i <= currentIndex ? 'bg-primary text-white' : 'bg-body-secondary text-body-tertiary'
+                  }`} style={{width: 32, height: 32, fontSize: '0.7rem'}}>
+                    {i <= currentIndex ? <span className="fas fa-check"></span> : (i + 1)}
+                  </div>
+                  <span className="fs-10 text-body-tertiary">{STATUS_LABELS[status]}</span>
                 </div>
-              </div>
+              ))}
             </div>
+          </div>
+        </div>
 
-            {/* Order Items */}
-            <div className="card mb-4 border border-translucent">
-              <div className="card-header"><h5 className="mb-0">🛍️ Order Items</h5></div>
+        <div className="row g-3">
+          {/* Order Info */}
+          <div className="col-lg-8">
+            <div className="card border border-translucent mb-3">
+              <div className="card-header"><h5 className="mb-0">Order Items</h5></div>
               <div className="card-body p-0">
                 <div className="table-responsive">
                   <table className="table fs-9 mb-0">
-                    <thead>
-                      <tr>
-                        <th className="align-middle ps-3">ITEM</th>
-                        <th className="align-middle">CATEGORY</th>
-                        <th className="align-middle text-end">PRICE</th>
-                        <th className="align-middle text-center">QTY</th>
-                        <th className="align-middle text-end pe-3">SUBTOTAL</th>
-                      </tr>
-                    </thead>
+                    <thead><tr><th>ITEM</th><th className="text-end">PRICE</th><th className="text-center">QTY</th><th className="text-end">SUBTOTAL</th></tr></thead>
                     <tbody>
-                      {sampleOrder.items.map((item, i) => (
+                      {(order.items || []).map((item, i) => (
                         <tr key={i}>
-                          <td className="align-middle ps-3 fw-semibold">{item.name}</td>
-                          <td className="align-middle text-body-tertiary">Pet Supplies</td>
-                          <td className="align-middle text-end">{formatCurrency(item.price)}</td>
-                          <td className="align-middle text-center">{item.qty}</td>
-                          <td className="align-middle text-end pe-3 fw-bold">{formatCurrency(item.price * item.qty)}</td>
+                          <td className="fw-semibold">{item.name}</td>
+                          <td className="text-end">{formatCurrency(item.price)}</td>
+                          <td className="text-center">{item.quantity}</td>
+                          <td className="text-end fw-bold">{formatCurrency(item.subtotal)}</td>
                         </tr>
                       ))}
                     </tbody>
+                    <tfoot className="border-top">
+                      <tr><td colSpan="3" className="text-end fw-semibold">Subtotal</td><td className="text-end">{formatCurrency(order.subtotal)}</td></tr>
+                      {order.discount > 0 && <tr><td colSpan="3" className="text-end text-success">Discount</td><td className="text-end text-success">-{formatCurrency(order.discount)}</td></tr>}
+                      {order.shipping_cost > 0 && <tr><td colSpan="3" className="text-end">Shipping</td><td className="text-end">{formatCurrency(order.shipping_cost)}</td></tr>}
+                      {order.tax > 0 && <tr><td colSpan="3" className="text-end">Tax (GST)</td><td className="text-end">{formatCurrency(order.tax)}</td></tr>}
+                      <tr className="fw-bold fs-8"><td colSpan="3" className="text-end">Total</td><td className="text-end">{formatCurrency(order.total)}</td></tr>
+                    </tfoot>
                   </table>
                 </div>
               </div>
             </div>
 
-            {/* Order Summary */}
-            <div className="card mb-4 border border-translucent">
-              <div className="card-header"><h5 className="mb-0">💰 Order Summary</h5></div>
-              <div className="card-body">
-                <div className="row">
-                  <div className="col-md-6 offset-md-6">
-                    <table className="table fs-9 mb-0">
-                      <tbody>
-                        <tr><td className="text-body-tertiary">Subtotal</td><td className="text-end fw-semibold">{formatCurrency(sampleOrder.total)}</td></tr>
-                        <tr><td className="text-body-tertiary">Discount</td><td className="text-end fw-semibold text-danger">-₹0</td></tr>
-                        <tr><td className="text-body-tertiary">Shipping</td><td className="text-end fw-semibold">₹99</td></tr>
-                        <tr><td className="text-body-tertiary">Tax (GST 18%)</td><td className="text-end fw-semibold">{formatCurrency(Math.round(sampleOrder.total * 0.18))}</td></tr>
-                        <tr className="border-top"><td className="fw-bold fs-8">Total</td><td className="text-end fw-bold fs-8">{formatCurrency(Math.round(sampleOrder.total * 1.18 + 99))}</td></tr>
-                      </tbody>
-                    </table>
-                  </div>
+            {/* Notes */}
+            {(order.customer_notes || order.admin_notes) && (
+              <div className="card border border-translucent">
+                <div className="card-header"><h5 className="mb-0">Notes</h5></div>
+                <div className="card-body">
+                  {order.customer_notes && <div className="mb-2"><strong>Customer:</strong> {order.customer_notes}</div>}
+                  {order.admin_notes && <div><strong>Admin:</strong> {order.admin_notes}</div>}
                 </div>
               </div>
-            </div>
-
-            {/* Order Notes */}
-            <div className="card mb-4 border border-translucent">
-              <div className="card-header"><h5 className="mb-0">📝 Order Notes</h5></div>
-              <div className="card-body">
-                <div className="mb-3 p-3 bg-body-secondary rounded">
-                  <div className="d-flex justify-content-between mb-1">
-                    <span className="fw-semibold text-body-emphasis">Customer Note</span>
-                    <span className="text-body-quaternary fs-10">May 5, 12:56 PM</span>
-                  </div>
-                  <p className="mb-0 text-body-tertiary">Please deliver before evening. My dog needs the food urgently.</p>
-                </div>
-                <div className="mb-3 p-3 bg-body-secondary rounded">
-                  <div className="d-flex justify-content-between mb-1">
-                    <span className="fw-semibold text-body-emphasis">Admin Note</span>
-                    <span className="text-body-quaternary fs-10">May 5, 2:00 PM</span>
-                  </div>
-                  <p className="mb-0 text-body-tertiary">Priority processing - customer is a Gold member.</p>
-                </div>
-                <div className="mt-3">
-                  <textarea className="form-control mb-2" rows="2" placeholder="Add a note..."></textarea>
-                  <button className="btn btn-sm btn-primary">Add Note</button>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Right Column */}
-          <div className="col-12 col-xl-4">
-            {/* Customer Info */}
-            <div className="card mb-4 border border-translucent">
-              <div className="card-header"><h5 className="mb-0">👤 Customer Info</h5></div>
+          {/* Sidebar */}
+          <div className="col-lg-4">
+            {/* Status Update */}
+            <div className="card border border-translucent mb-3">
+              <div className="card-header"><h5 className="mb-0">Update Status</h5></div>
               <div className="card-body">
-                <div className="d-flex align-items-center mb-3">
-                  {sampleOrder.customer.avatar ? (
-                    <div className="avatar avatar-l me-3"><img className="rounded-circle" src={sampleOrder.customer.avatar} alt="" /></div>
-                  ) : (
-                    <div className="avatar avatar-l me-3"><div className="avatar-name rounded-circle"><span>{sampleOrder.customer.name.charAt(0)}</span></div></div>
-                  )}
-                  <div>
-                    <h6 className="mb-0">{sampleOrder.customer.name}</h6>
-                    <span className="badge badge-phoenix-warning">Gold Member</span>
-                  </div>
-                </div>
-                <div className="mb-2"><span className="fas fa-envelope text-body-tertiary me-2"></span>priya.sharma@gmail.com</div>
-                <div className="mb-2"><span className="fas fa-phone text-body-tertiary me-2"></span>+91 98765 43210</div>
-                <hr />
-                <h6 className="fs-9 mb-2">Billing Address</h6>
-                <p className="text-body-tertiary fs-9 mb-3">42 Anna Nagar, Chennai 600040</p>
-                <h6 className="fs-9 mb-2">Shipping Address</h6>
-                <p className="text-body-tertiary fs-9 mb-0">42 Anna Nagar, Chennai 600040</p>
+                <select className="form-select mb-3" value={order.status} onChange={e => handleStatusUpdate(e.target.value)} disabled={updating}>
+                  {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+                {updating && <div className="text-center"><span className="spinner-border spinner-border-sm"></span></div>}
               </div>
             </div>
 
-            {/* Payment Info */}
-            <div className="card mb-4 border border-translucent">
-              <div className="card-header"><h5 className="mb-0">💳 Payment</h5></div>
+            {/* Customer Info */}
+            <div className="card border border-translucent mb-3">
+              <div className="card-header"><h5 className="mb-0">Customer</h5></div>
               <div className="card-body">
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-body-tertiary">Method</span>
-                  <span className="fw-semibold">{sampleOrder.deliveryType}</span>
-                </div>
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-body-tertiary">Status</span>
-                  <span className={`badge ${sampleOrder.paymentStatus.type}`}>{sampleOrder.paymentStatus.label}</span>
+                <p className="fw-semibold mb-1">{order.customer?.name || 'Unknown'}</p>
+                <p className="text-body-tertiary fs-9 mb-1">{order.customer?.email}</p>
+                <p className="text-body-tertiary fs-9 mb-0">{order.customer?.phone}</p>
+              </div>
+            </div>
+
+            {/* Payment */}
+            <div className="card border border-translucent mb-3">
+              <div className="card-header"><h5 className="mb-0">Payment</h5></div>
+              <div className="card-body">
+                <div className="d-flex justify-content-between mb-1">
+                  <span>Method</span><span className="fw-semibold text-uppercase">{order.payment_method}</span>
                 </div>
                 <div className="d-flex justify-content-between">
-                  <span className="text-body-tertiary">Transaction ID</span>
-                  <span className="fw-semibold">TXN-2026-00847</span>
+                  <span>Status</span>
+                  <span className={`badge ${order.payment_status === 'paid' ? 'badge-phoenix-success' : 'badge-phoenix-warning'}`}>
+                    {order.payment_status}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Shipping Info */}
-            <div className="card mb-4 border border-translucent">
-              <div className="card-header"><h5 className="mb-0">🚚 Shipping</h5></div>
-              <div className="card-body">
-                <div className="d-flex justify-content-between mb-2"><span className="text-body-tertiary">Carrier</span><span className="fw-semibold">BlueDart Express</span></div>
-                <div className="d-flex justify-content-between mb-2"><span className="text-body-tertiary">Tracking #</span><span className="fw-semibold text-primary">BD123456789</span></div>
-                <div className="d-flex justify-content-between mb-2"><span className="text-body-tertiary">Shipped</span><span className="fw-semibold">May 6, 9:00 AM</span></div>
-                <div className="d-flex justify-content-between"><span className="text-body-tertiary">Est. Delivery</span><span className="fw-semibold">May 8, 2026</span></div>
+            {/* Shipping */}
+            {order.tracking_number && (
+              <div className="card border border-translucent">
+                <div className="card-header"><h5 className="mb-0">Shipping</h5></div>
+                <div className="card-body">
+                  <div className="d-flex justify-content-between mb-1"><span>Carrier</span><span className="fw-semibold">{order.carrier}</span></div>
+                  <div className="d-flex justify-content-between mb-1"><span>Tracking</span><span className="fw-semibold">{order.tracking_number}</span></div>
+                  {order.shipped_at && <div className="d-flex justify-content-between"><span>Shipped</span><span>{new Date(order.shipped_at).toLocaleDateString('en-IN')}</span></div>}
+                </div>
               </div>
-            </div>
-
-            {/* Documents (Pet Orders) */}
-            <div className="card mb-4 border border-translucent">
-              <div className="card-header"><h5 className="mb-0">📄 Documents</h5></div>
-              <div className="card-body">
-                <button className="btn btn-sm btn-phoenix-primary w-100 mb-2"><span className="fas fa-file-medical me-2"></span>Health Certificate</button>
-                <button className="btn btn-sm btn-phoenix-primary w-100 mb-2"><span className="fas fa-syringe me-2"></span>Vaccination Records</button>
-                <button className="btn btn-sm btn-phoenix-primary w-100 mb-2"><span className="fas fa-exchange-alt me-2"></span>Pet Transfer Certificate</button>
-                <button className="btn btn-sm btn-phoenix-secondary w-100"><span className="fas fa-file-invoice me-2"></span>Download Invoice</button>
-              </div>
-            </div>
-
-            {/* Refund */}
-            <div className="card border border-translucent">
-              <div className="card-header"><h5 className="mb-0">💸 Refund</h5></div>
-              <div className="card-body">
-                <button className="btn btn-phoenix-danger w-100"><span className="fas fa-undo me-2"></span>Process Refund</button>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

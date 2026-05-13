@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    apiGet('/user')
+    apiGet('/profile')
       .then(data => {
         const freshUser = data.user || data;
         setUser(freshUser);

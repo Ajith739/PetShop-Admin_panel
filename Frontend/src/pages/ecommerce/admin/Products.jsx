@@ -1,83 +1,92 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import usePhoenixInit from '../../../hooks/usePhoenixInit';
-import { productsData, petCategories, petBrands, formatCurrency } from './petShopData';
+import { productService } from '../../../services/api';
+
+const formatCurrency = (amount) => '₹' + Number(amount).toLocaleString('en-IN');
 
 export default function Products() {
   usePhoenixInit();
-
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('');
   const [brandFilter, setBrandFilter] = useState('');
   const [page, setPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState(new Set());
-  const [starredMap, setStarredMap] = useState(() => {
-    const m = {};
-    productsData.forEach(p => { m[p.id] = p.starred; });
-    return m;
-  });
   const perPage = 10;
 
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await productService.getAll();
+      setProducts(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
   useEffect(() => { if (window.feather) window.feather.replace(); });
 
-  // Filtering
+  const brands = useMemo(() => [...new Set(products.map(p => p.brand).filter(Boolean))], [products]);
+
   const filtered = useMemo(() => {
-    return productsData.filter(p => {
-      const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.brand.toLowerCase().includes(search.toLowerCase());
+    return products.filter(p => {
+      const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.brand||'').toLowerCase().includes(search.toLowerCase());
       const matchTab = activeTab === 'all' ||
-        (activeTab === 'in-stock' && p.stock > 0 && p.status !== 'on-sale') ||
-        (activeTab === 'out-of-stock' && p.stock === 0) ||
-        (activeTab === 'on-sale' && p.salePrice);
-      const matchCategory = !categoryFilter || p.category === categoryFilter;
+        (activeTab === 'in-stock' && p.stock_quantity > 0 && !p.sale_price) ||
+        (activeTab === 'out-of-stock' && p.stock_quantity === 0) ||
+        (activeTab === 'on-sale' && p.sale_price);
       const matchBrand = !brandFilter || p.brand === brandFilter;
-      return matchSearch && matchTab && matchCategory && matchBrand;
+      return matchSearch && matchTab && matchBrand;
     });
-  }, [search, activeTab, categoryFilter, brandFilter]);
+  }, [products, search, activeTab, brandFilter]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const pageData = filtered.slice((page - 1) * perPage, page * perPage);
 
-  // Tab counts
   const counts = {
-    all: productsData.length,
-    'in-stock': productsData.filter(p => p.stock > 0 && !p.salePrice).length,
-    'out-of-stock': productsData.filter(p => p.stock === 0).length,
-    'on-sale': productsData.filter(p => p.salePrice).length,
+    all: products.length,
+    'in-stock': products.filter(p => p.stock_quantity > 0 && !p.sale_price).length,
+    'out-of-stock': products.filter(p => p.stock_quantity === 0).length,
+    'on-sale': products.filter(p => p.sale_price).length,
   };
-
-  const toggleStar = (id) => setStarredMap(prev => ({ ...prev, [id]: !prev[id] }));
 
   const toggleRow = (id) => {
-    setSelectedRows(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setSelectedRows(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
+  const toggleAll = () => {
+    setSelectedRows(selectedRows.size === pageData.length ? new Set() : new Set(pageData.map(p => p.id)));
   };
 
-  const toggleAll = () => {
-    if (selectedRows.size === pageData.length) {
-      setSelectedRows(new Set());
-    } else {
-      setSelectedRows(new Set(pageData.map(p => p.id)));
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this product?')) return;
+    try {
+      await productService.delete(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      alert(err.message || 'Failed to delete');
     }
   };
+
+  if (loading) {
+    return <div className="d-flex justify-content-center py-9"><div className="spinner-border text-primary" role="status"></div></div>;
+  }
 
   return (
     <>
       <nav className="mb-3" aria-label="breadcrumb">
         <ol className="breadcrumb mb-0">
           <li className="breadcrumb-item"><a href="/">Pet Shop</a></li>
-          <li className="breadcrumb-item"><a href="/pet-shop/products">Products</a></li>
-          <li className="breadcrumb-item active">Product list</li>
+          <li className="breadcrumb-item active">Products</li>
         </ol>
       </nav>
 
       <div className="mb-9">
         <div className="row g-3 mb-4">
-          <div className="col-auto">
-            <h2 className="mb-0">Products</h2>
-          </div>
+          <div className="col-auto"><h2 className="mb-0">📦 Products</h2></div>
         </div>
 
         {/* Tabs */}
@@ -99,53 +108,31 @@ export default function Products() {
         </ul>
 
         {/* Search & Filters */}
-        <div className="mb-4">
-          <div className="d-flex flex-wrap gap-3">
-            <div className="search-box">
-              <form className="position-relative">
-                <input className="form-control search-input search" type="search" placeholder="Search products"
-                  aria-label="Search" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-                <span className="fas fa-search search-box-icon"></span>
-              </form>
-            </div>
-            <div className="scrollbar overflow-hidden-y">
-              <div className="btn-group position-static" role="group">
-                <div className="btn-group position-static text-nowrap">
-                  <button className="btn btn-phoenix-secondary px-7 flex-shrink-0" type="button"
-                    data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" data-bs-reference="parent">
-                    {categoryFilter || 'Category'}<span className="fas fa-angle-down ms-2"></span>
-                  </button>
-                  <ul className="dropdown-menu">
-                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setCategoryFilter(''); setPage(1); }}>All Categories</a></li>
-                    {petCategories.map(cat => (
-                      <li key={cat}><a className="dropdown-item" href="#"
-                        onClick={(e) => { e.preventDefault(); setCategoryFilter(cat); setPage(1); }}>{cat}</a></li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="btn-group position-static text-nowrap">
-                  <button className="btn btn-sm btn-phoenix-secondary px-7 flex-shrink-0" type="button"
-                    data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true" aria-expanded="false" data-bs-reference="parent">
-                    {brandFilter || 'Brand'}<span className="fas fa-angle-down ms-2"></span>
-                  </button>
-                  <ul className="dropdown-menu">
-                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setBrandFilter(''); setPage(1); }}>All Brands</a></li>
-                    {petBrands.map(br => (
-                      <li key={br}><a className="dropdown-item" href="#"
-                        onClick={(e) => { e.preventDefault(); setBrandFilter(br); setPage(1); }}>{br}</a></li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div className="ms-xxl-auto">
-              <button className="btn btn-link text-body me-4 px-0">
-                <span className="fa-solid fa-file-export fs-9 me-2"></span>Export
-              </button>
-              <a className="btn btn-primary" href="/pet-shop/add-product">
-                <span className="fas fa-plus me-2"></span>Add product
-              </a>
-            </div>
+        <div className="d-flex flex-wrap gap-3 mb-4">
+          <div className="search-box">
+            <form className="position-relative">
+              <input className="form-control search-input search" type="search" placeholder="Search products"
+                value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+              <span className="fas fa-search search-box-icon"></span>
+            </form>
+          </div>
+          <div className="btn-group position-static text-nowrap">
+            <button className="btn btn-phoenix-secondary px-7" type="button"
+              data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
+              {brandFilter || 'Brand'}<span className="fas fa-angle-down ms-2"></span>
+            </button>
+            <ul className="dropdown-menu">
+              <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setBrandFilter(''); setPage(1); }}>All Brands</a></li>
+              {brands.map(br => (
+                <li key={br}><a className="dropdown-item" href="#"
+                  onClick={(e) => { e.preventDefault(); setBrandFilter(br); setPage(1); }}>{br}</a></li>
+              ))}
+            </ul>
+          </div>
+          <div className="ms-xxl-auto">
+            <a className="btn btn-primary" href="/products/add">
+              <span className="fas fa-plus me-2"></span>Add Product
+            </a>
           </div>
         </div>
 
@@ -155,22 +142,19 @@ export default function Products() {
             <table className="table fs-9 mb-0">
               <thead>
                 <tr>
-                  <th className="white-space-nowrap fs-9 align-middle ps-0" style={{maxWidth: 20, width: 18}}>
+                  <th className="white-space-nowrap fs-9 align-middle ps-0" style={{width: 18}}>
                     <div className="form-check mb-0 fs-8">
                       <input className="form-check-input" type="checkbox"
-                        checked={selectedRows.size === pageData.length && pageData.length > 0}
-                        onChange={toggleAll} />
+                        checked={selectedRows.size === pageData.length && pageData.length > 0} onChange={toggleAll} />
                     </div>
                   </th>
-                  <th className="sort white-space-nowrap align-middle fs-10" scope="col" style={{width: 70}}></th>
-                  <th className="sort white-space-nowrap align-middle ps-4" scope="col" style={{width: 350}}>PRODUCT NAME</th>
-                  <th className="sort align-middle text-end ps-4" scope="col" style={{width: 150}}>PRICE</th>
-                  <th className="sort align-middle ps-4" scope="col" style={{width: 150}}>CATEGORY</th>
-                  <th className="sort align-middle ps-3" scope="col" style={{width: 250}}>TAGS</th>
-                  <th className="sort align-middle fs-8 text-center ps-4" scope="col" style={{width: 50}}></th>
-                  <th className="sort align-middle ps-4" scope="col" style={{width: 200}}>BRAND</th>
-                  <th className="sort align-middle ps-4" scope="col" style={{width: 150}}>PUBLISHED ON</th>
-                  <th className="sort text-end align-middle pe-0 ps-4" scope="col"></th>
+                  <th className="sort align-middle ps-4">PRODUCT NAME</th>
+                  <th className="sort align-middle ps-4">SKU</th>
+                  <th className="sort align-middle text-end ps-4">PRICE</th>
+                  <th className="sort align-middle text-center ps-4">STOCK</th>
+                  <th className="sort align-middle ps-4">BRAND</th>
+                  <th className="sort align-middle text-center ps-4">STATUS</th>
+                  <th className="sort text-end align-middle pe-0 ps-4"></th>
                 </tr>
               </thead>
               <tbody className="list">
@@ -182,54 +166,40 @@ export default function Products() {
                           checked={selectedRows.has(product.id)} onChange={() => toggleRow(product.id)} />
                       </div>
                     </td>
-                    <td className="align-middle white-space-nowrap py-0">
-                      <span className="d-block border border-translucent rounded-2 text-center" style={{width: 53, height: 53, lineHeight: '53px', fontSize: '1.5rem'}}>
-                        {product.image}
-                      </span>
-                    </td>
                     <td className="product align-middle ps-4">
-                      <a className="fw-semibold line-clamp-3 mb-0" href="#!">{product.name}</a>
+                      <span className="fw-semibold">{product.name}</span>
+                      {product.is_featured && <span className="badge badge-phoenix badge-phoenix-warning ms-2 fs-10">Featured</span>}
                     </td>
+                    <td className="align-middle ps-4 text-body-tertiary font-monospace fs-10">{product.sku}</td>
                     <td className="price align-middle white-space-nowrap text-end fw-bold text-body-tertiary ps-4">
-                      {product.salePrice ? (
+                      {product.sale_price ? (
                         <>
                           <span className="text-decoration-line-through text-body-quaternary me-1">{formatCurrency(product.price)}</span>
-                          {formatCurrency(product.salePrice)}
+                          {formatCurrency(product.sale_price)}
                         </>
                       ) : formatCurrency(product.price)}
                     </td>
-                    <td className="category align-middle white-space-nowrap text-body-quaternary fs-9 ps-4 fw-semibold">
-                      {product.category}
+                    <td className="align-middle text-center ps-4">
+                      <span className={`badge ${product.stock_quantity > 10 ? 'badge-phoenix-success' : product.stock_quantity > 0 ? 'badge-phoenix-warning' : 'badge-phoenix-danger'}`}>
+                        {product.stock_quantity > 0 ? product.stock_quantity : 'Out'}
+                      </span>
                     </td>
-                    <td className="tags align-middle review pb-2 ps-3" style={{minWidth: 225}}>
-                      {product.tags.map(tag => (
-                        <a key={tag} className="text-decoration-none" href="#!">
-                          <span className="badge badge-tag me-2 mb-2">{tag}</span>
-                        </a>
-                      ))}
+                    <td className="align-middle ps-4 text-body-tertiary">{product.brand || '-'}</td>
+                    <td className="align-middle text-center ps-4">
+                      <span className={`badge ${product.is_active ? 'badge-phoenix-success' : 'badge-phoenix-secondary'}`}>
+                        {product.is_active ? 'Active' : 'Inactive'}
+                      </span>
                     </td>
-                    <td className="align-middle review fs-8 text-center ps-4">
-                      <span className={`fas fa-star ${starredMap[product.id] ? 'text-warning' : 'text-body-quaternary'}`}
-                        style={{ cursor: 'pointer' }} onClick={() => toggleStar(product.id)}></span>
-                    </td>
-                    <td className="vendor align-middle text-start fw-semibold ps-4">
-                      <a href="#!">{product.brand}</a>
-                    </td>
-                    <td className="time align-middle white-space-nowrap text-body-tertiary text-opacity-85 ps-4">
-                      {product.publishedOn}
-                    </td>
-                    <td className="align-middle white-space-nowrap text-end pe-0 ps-4 btn-reveal-trigger">
+                    <td className="align-middle white-space-nowrap text-end pe-0 ps-4">
                       <div className="btn-reveal-trigger position-static">
                         <button className="btn btn-sm dropdown-toggle dropdown-caret-none transition-none btn-reveal fs-10"
-                          type="button" data-bs-toggle="dropdown" data-boundary="window" aria-haspopup="true"
-                          aria-expanded="false" data-bs-reference="parent">
+                          type="button" data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
                           <span className="fas fa-ellipsis-h fs-10"></span>
                         </button>
                         <div className="dropdown-menu dropdown-menu-end py-2">
-                          <a className="dropdown-item" href="#!">View</a>
-                          <a className="dropdown-item" href="#!">Export</a>
+                          <a className="dropdown-item" href="#!">Edit</a>
                           <div className="dropdown-divider"></div>
-                          <a className="dropdown-item text-danger" href="#!">Remove</a>
+                          <a className="dropdown-item text-danger" href="#" onClick={(e) => { e.preventDefault(); handleDelete(product.id); }}>Remove</a>
                         </div>
                       </div>
                     </td>

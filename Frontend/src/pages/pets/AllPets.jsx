@@ -1,9 +1,17 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import usePhoenixInit from '../../hooks/usePhoenixInit';
-import { petsData, petCategories, petBreeds, formatPetCurrency } from '../../data/petsData';
+import { petService, categoryService, breedService } from '../../services/api';
+
+const formatCurrency = (amount) => '₹' + Number(amount).toLocaleString('en-IN');
 
 export default function AllPets() {
   usePhoenixInit();
+  const [pets, setPets] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [breeds, setBreeds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [breedFilter, setBreedFilter] = useState('');
@@ -14,23 +22,60 @@ export default function AllPets() {
   const [selectedRows, setSelectedRows] = useState(new Set());
   const perPage = 10;
 
+  // Fetch data from API
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [petsRes, catsRes, breedsRes] = await Promise.all([
+        petService.getAll(),
+        categoryService.getAll(),
+        breedService.getAll(),
+      ]);
+      setPets(petsRes.data || []);
+      // categories endpoint returns flat array
+      setCategories(Array.isArray(catsRes) ? catsRes : (catsRes.data || []));
+      setBreeds(breedsRes.data || []);
+    } catch (err) {
+      setError(err.message || 'Failed to load pets');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { if (window.feather) window.feather.replace(); });
 
+  const categoryMap = useMemo(() => {
+    const map = {};
+    categories.forEach(c => { map[c.id] = c; });
+    return map;
+  }, [categories]);
+
+  const breedMap = useMemo(() => {
+    const map = {};
+    breeds.forEach(b => { map[b.id] = b; });
+    return map;
+  }, [breeds]);
+
   const filtered = useMemo(() => {
-    return petsData.filter(p => {
-      const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.breed.toLowerCase().includes(search.toLowerCase());
-      const matchCategory = !categoryFilter || p.category === categoryFilter;
-      const matchBreed = !breedFilter || p.breed === breedFilter;
-      const matchGender = !genderFilter || p.gender === genderFilter;
-      const matchHealth = !healthFilter || p.healthStatus === healthFilter;
-      const matchSize = !sizeFilter || p.size === sizeFilter;
+    return pets.filter(p => {
+      const catName = categoryMap[p.pet_category_id]?.name || '';
+      const breedName = breedMap[p.breed_id]?.name || '';
+      const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || breedName.toLowerCase().includes(search.toLowerCase());
+      const matchCategory = !categoryFilter || catName === categoryFilter;
+      const matchBreed = !breedFilter || breedName === breedFilter;
+      const matchGender = !genderFilter || p.gender === genderFilter.toLowerCase();
+      const matchHealth = !healthFilter || p.health_status === healthFilter.toLowerCase();
+      const matchSize = !sizeFilter || p.size === sizeFilter.toLowerCase();
       return matchSearch && matchCategory && matchBreed && matchGender && matchHealth && matchSize;
     });
-  }, [search, categoryFilter, breedFilter, genderFilter, healthFilter, sizeFilter]);
+  }, [pets, search, categoryFilter, breedFilter, genderFilter, healthFilter, sizeFilter, categoryMap, breedMap]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const pageData = filtered.slice((page - 1) * perPage, page * perPage);
-  const availableBreeds = categoryFilter ? (petBreeds[categoryFilter] || []) : Object.values(petBreeds).flat();
+  const availableBreeds = categoryFilter
+    ? breeds.filter(b => categoryMap[b.pet_category_id]?.name === categoryFilter)
+    : breeds;
 
   const toggleRow = (id) => {
     setSelectedRows(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -38,6 +83,49 @@ export default function AllPets() {
   const toggleAll = () => {
     setSelectedRows(selectedRows.size === pageData.length ? new Set() : new Set(pageData.map(p => p.id)));
   };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this pet?')) return;
+    try {
+      await petService.delete(id);
+      setPets(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      alert(err.message || 'Failed to delete pet');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedRows.size} selected pets?`)) return;
+    try {
+      await petService.bulkDelete([...selectedRows]);
+      setPets(prev => prev.filter(p => !selectedRows.has(p.id)));
+      setSelectedRows(new Set());
+    } catch (err) {
+      alert(err.message || 'Failed to delete pets');
+    }
+  };
+
+  const healthBadge = (status) => {
+    const map = { excellent: 'badge-phoenix-success', good: 'badge-phoenix-success', fair: 'badge-phoenix-warning', needs_attention: 'badge-phoenix-danger' };
+    return map[status] || 'badge-phoenix-secondary';
+  };
+
+  const healthLabel = (status) => {
+    const map = { excellent: 'Excellent', good: 'Good', fair: 'Fair', needs_attention: 'Needs Attention' };
+    return map[status] || status;
+  };
+
+  const stockBadge = (qty) => qty > 0 ? 'badge-phoenix-success' : 'badge-phoenix-danger';
+
+  const categoryIcons = { Dogs: '🐕', Cats: '🐱', Fish: '🐠', Birds: '🐦', Reptiles: '🦎', 'Small Animals': '🐹' };
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center py-9">
+        <div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -54,13 +142,15 @@ export default function AllPets() {
           <div className="col-auto"><h2 className="mb-0">🐾 All Pets</h2></div>
         </div>
 
+        {error && <div className="alert alert-phoenix-danger mb-3">{error}</div>}
+
         {/* Summary Cards */}
         <div className="row g-3 mb-4">
           {[
-            { label: 'Total Pets', value: petsData.length, icon: '🐾', color: 'primary' },
-            { label: 'Available', value: petsData.filter(p => p.stock > 0).length, icon: '✅', color: 'success' },
-            { label: 'Featured', value: petsData.filter(p => p.featured).length, icon: '⭐', color: 'warning' },
-            { label: 'Categories', value: petCategories.length, icon: '📂', color: 'info' },
+            { label: 'Total Pets', value: pets.length, icon: '🐾', color: 'primary' },
+            { label: 'Available', value: pets.filter(p => p.stock_quantity > 0).length, icon: '✅', color: 'success' },
+            { label: 'Featured', value: pets.filter(p => p.is_featured).length, icon: '⭐', color: 'warning' },
+            { label: 'Categories', value: categories.length, icon: '📂', color: 'info' },
           ].map((card, i) => (
             <div key={i} className="col-6 col-md-3">
               <div className="card border border-translucent">
@@ -96,9 +186,9 @@ export default function AllPets() {
                   </button>
                   <ul className="dropdown-menu">
                     <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setCategoryFilter(''); setBreedFilter(''); setPage(1); }}>All Categories</a></li>
-                    {petCategories.map(cat => (
+                    {categories.map(cat => (
                       <li key={cat.id}><a className="dropdown-item" href="#"
-                        onClick={(e) => { e.preventDefault(); setCategoryFilter(cat.name); setBreedFilter(''); setPage(1); }}>{cat.icon} {cat.name}</a></li>
+                        onClick={(e) => { e.preventDefault(); setCategoryFilter(cat.name); setBreedFilter(''); setPage(1); }}>{categoryIcons[cat.name] || '📂'} {cat.name}</a></li>
                     ))}
                   </ul>
                 </div>
@@ -111,7 +201,7 @@ export default function AllPets() {
                   <ul className="dropdown-menu" style={{maxHeight: 200, overflowY: 'auto'}}>
                     <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setBreedFilter(''); setPage(1); }}>All Breeds</a></li>
                     {availableBreeds.map(b => (
-                      <li key={b}><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setBreedFilter(b); setPage(1); }}>{b}</a></li>
+                      <li key={b.id}><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setBreedFilter(b.name); setPage(1); }}>{b.name}</a></li>
                     ))}
                   </ul>
                 </div>
@@ -158,9 +248,7 @@ export default function AllPets() {
         {selectedRows.size > 0 && (
           <div className="alert alert-phoenix-info d-flex align-items-center mb-3">
             <span className="me-3">{selectedRows.size} selected</span>
-            <button className="btn btn-sm btn-phoenix-danger me-2"><span className="fas fa-trash me-1"></span>Delete</button>
-            <button className="btn btn-sm btn-phoenix-secondary me-2"><span className="fas fa-box me-1"></span>Update Stock</button>
-            <button className="btn btn-sm btn-phoenix-secondary"><span className="fas fa-tag me-1"></span>Update Price</button>
+            <button className="btn btn-sm btn-phoenix-danger me-2" onClick={handleBulkDelete}><span className="fas fa-trash me-1"></span>Delete</button>
           </div>
         )}
 
@@ -176,7 +264,6 @@ export default function AllPets() {
                         checked={selectedRows.size === pageData.length && pageData.length > 0} onChange={toggleAll} />
                     </div>
                   </th>
-                  <th className="sort align-middle" style={{width: 50}}></th>
                   <th className="sort align-middle ps-4" style={{width: 200}}>PET NAME</th>
                   <th className="sort align-middle ps-4" style={{width: 100}}>CATEGORY</th>
                   <th className="sort align-middle ps-4" style={{width: 150}}>BREED</th>
@@ -189,63 +276,64 @@ export default function AllPets() {
                 </tr>
               </thead>
               <tbody className="list">
-                {pageData.map(pet => (
-                  <tr key={pet.id} className="position-static">
-                    <td className="fs-9 align-middle">
-                      <div className="form-check mb-0 fs-8">
-                        <input className="form-check-input" type="checkbox" checked={selectedRows.has(pet.id)} onChange={() => toggleRow(pet.id)} />
-                      </div>
-                    </td>
-                    <td className="align-middle white-space-nowrap py-0">
-                      <span className="d-block border border-translucent rounded-2 text-center" style={{width: 42, height: 42, lineHeight: '42px', fontSize: '1.3rem'}}>
-                        {pet.featuredImage}
-                      </span>
-                    </td>
-                    <td className="align-middle ps-4">
-                      <a className="fw-semibold mb-0" href={`/pets/${pet.id}`}>
-                        {pet.name}
-                        {pet.featured && <span className="badge badge-phoenix badge-phoenix-warning ms-2 fs-10">Featured</span>}
-                      </a>
-                    </td>
-                    <td className="align-middle ps-4 text-body-quaternary fw-semibold fs-9">{pet.category}</td>
-                    <td className="align-middle ps-4 text-body-tertiary fs-9">{pet.breed}</td>
-                    <td className="align-middle ps-4 text-body-tertiary fs-9">{pet.age}</td>
-                    <td className="align-middle ps-4 text-body-tertiary fs-9">{pet.gender}</td>
-                    <td className="align-middle text-end ps-4 fw-bold text-body-tertiary">
-                      {pet.salePrice ? (
-                        <>
-                          <span className="text-decoration-line-through text-body-quaternary me-1">{formatPetCurrency(pet.price)}</span>
-                          {formatPetCurrency(pet.salePrice)}
-                        </>
-                      ) : formatPetCurrency(pet.price)}
-                    </td>
-                    <td className="align-middle text-center ps-4">
-                      <span className={`badge ${pet.stock > 0 ? 'badge-phoenix-success' : 'badge-phoenix-danger'}`}>
-                        {pet.stock > 0 ? pet.stock : 'Sold Out'}
-                      </span>
-                    </td>
-                    <td className="align-middle ps-4">
-                      <span className={`badge ${pet.healthStatus === 'Healthy' ? 'badge-phoenix-success' : 'badge-phoenix-warning'}`}>
-                        {pet.healthStatus}
-                      </span>
-                    </td>
-                    <td className="align-middle white-space-nowrap text-end pe-0 ps-4 btn-reveal-trigger">
-                      <div className="btn-reveal-trigger position-static">
-                        <button className="btn btn-sm dropdown-toggle dropdown-caret-none transition-none btn-reveal fs-10"
-                          type="button" data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
-                          <span className="fas fa-ellipsis-h fs-10"></span>
-                        </button>
-                        <div className="dropdown-menu dropdown-menu-end py-2">
-                          <a className="dropdown-item" href={`/pets/${pet.id}`}>View</a>
-                          <a className="dropdown-item" href={`/pets/edit/${pet.id}`}>Edit</a>
-                          <a className="dropdown-item" href="#">Health Records</a>
-                          <div className="dropdown-divider"></div>
-                          <a className="dropdown-item text-danger" href="#">Remove</a>
+                {pageData.map(pet => {
+                  const catName = categoryMap[pet.pet_category_id]?.name || 'Unknown';
+                  const breedName = breedMap[pet.breed_id]?.name || 'Unknown';
+                  const ageLabel = pet.age_months >= 12 ? `${Math.floor(pet.age_months/12)} yr${pet.age_months >= 24 ? 's' : ''}` : `${pet.age_months} mo`;
+                  return (
+                    <tr key={pet.id} className="position-static">
+                      <td className="fs-9 align-middle">
+                        <div className="form-check mb-0 fs-8">
+                          <input className="form-check-input" type="checkbox" checked={selectedRows.has(pet.id)} onChange={() => toggleRow(pet.id)} />
                         </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="align-middle ps-4">
+                        <a className="fw-semibold mb-0" href={`/pets/edit/${pet.id}`}>
+                          {pet.name}
+                          {pet.is_featured && <span className="badge badge-phoenix badge-phoenix-warning ms-2 fs-10">Featured</span>}
+                        </a>
+                      </td>
+                      <td className="align-middle ps-4 text-body-quaternary fw-semibold fs-9">
+                        {categoryIcons[catName] || ''} {catName}
+                      </td>
+                      <td className="align-middle ps-4 text-body-tertiary fs-9">{breedName}</td>
+                      <td className="align-middle ps-4 text-body-tertiary fs-9">{ageLabel}</td>
+                      <td className="align-middle ps-4 text-body-tertiary fs-9 text-capitalize">{pet.gender}</td>
+                      <td className="align-middle text-end ps-4 fw-bold text-body-tertiary">
+                        {pet.sale_price ? (
+                          <>
+                            <span className="text-decoration-line-through text-body-quaternary me-1">{formatCurrency(pet.price)}</span>
+                            {formatCurrency(pet.sale_price)}
+                          </>
+                        ) : formatCurrency(pet.price)}
+                      </td>
+                      <td className="align-middle text-center ps-4">
+                        <span className={`badge ${stockBadge(pet.stock_quantity)}`}>
+                          {pet.stock_quantity > 0 ? pet.stock_quantity : 'Sold Out'}
+                        </span>
+                      </td>
+                      <td className="align-middle ps-4">
+                        <span className={`badge ${healthBadge(pet.health_status)}`}>
+                          {healthLabel(pet.health_status)}
+                        </span>
+                      </td>
+                      <td className="align-middle white-space-nowrap text-end pe-0 ps-4 btn-reveal-trigger">
+                        <div className="btn-reveal-trigger position-static">
+                          <button className="btn btn-sm dropdown-toggle dropdown-caret-none transition-none btn-reveal fs-10"
+                            type="button" data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
+                            <span className="fas fa-ellipsis-h fs-10"></span>
+                          </button>
+                          <div className="dropdown-menu dropdown-menu-end py-2">
+                            <a className="dropdown-item" href={`/pets/edit/${pet.id}`}>Edit</a>
+                            <a className="dropdown-item" href="/pets/health-records">Health Records</a>
+                            <div className="dropdown-divider"></div>
+                            <a className="dropdown-item text-danger" href="#" onClick={(e) => { e.preventDefault(); handleDelete(pet.id); }}>Remove</a>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

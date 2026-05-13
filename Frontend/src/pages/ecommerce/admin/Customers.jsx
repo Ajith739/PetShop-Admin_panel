@@ -1,158 +1,120 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import usePhoenixInit from '../../../hooks/usePhoenixInit';
-import { customersData, formatCurrency } from './petShopData';
+import { customerService } from '../../../services/api';
+
+const formatCurrency = (amount) => '₹' + Number(amount).toLocaleString('en-IN');
 
 export default function Customers() {
   usePhoenixInit();
-
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
-  const [cityFilter, setCityFilter] = useState('');
-  const [petTypeFilter, setPetTypeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [selectedRows, setSelectedRows] = useState(new Set());
   const perPage = 10;
 
+  const fetchCustomers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await customerService.getAll();
+      setCustomers(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch customers:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchCustomers(); }, [fetchCustomers]);
   useEffect(() => { if (window.feather) window.feather.replace(); });
 
-  const cities = [...new Set(customersData.map(c => c.city))];
-  const petOwnerTypes = [...new Set(customersData.map(c => c.petOwnerType))];
-
   const filtered = useMemo(() => {
-    return customersData.filter(c => {
+    return customers.filter(c => {
       const matchSearch = !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase());
-      const matchTab = activeTab === 'all' ||
-        (activeTab === 'new' && c.totalOrders < 40) ||
-        (activeTab === 'repeat' && c.totalOrders >= 40) ||
-        (activeTab === 'dog' && c.petOwnerType === 'Dog Owner') ||
-        (activeTab === 'cat' && c.petOwnerType === 'Cat Owner') ||
-        (activeTab === 'loyalty' && (c.loyaltyTier === 'Gold' || c.loyaltyTier === 'Silver'));
-      const matchCity = !cityFilter || c.city === cityFilter;
-      const matchPetType = !petTypeFilter || c.petOwnerType === petTypeFilter;
-      return matchSearch && matchTab && matchCity && matchPetType;
+      const matchStatus = !statusFilter || c.status === statusFilter;
+      return matchSearch && matchStatus;
     });
-  }, [search, activeTab, cityFilter, petTypeFilter]);
+  }, [customers, search, statusFilter]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const pageData = filtered.slice((page - 1) * perPage, page * perPage);
 
-  const counts = {
-    all: customersData.length,
-    new: customersData.filter(c => c.totalOrders < 40).length,
-    repeat: customersData.filter(c => c.totalOrders >= 40).length,
-    dog: customersData.filter(c => c.petOwnerType === 'Dog Owner').length,
-    cat: customersData.filter(c => c.petOwnerType === 'Cat Owner').length,
-    loyalty: customersData.filter(c => c.loyaltyTier === 'Gold' || c.loyaltyTier === 'Silver').length,
-  };
-
   const toggleRow = (id) => {
-    setSelectedRows(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    setSelectedRows(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   };
-
   const toggleAll = () => {
-    if (selectedRows.size === pageData.length) setSelectedRows(new Set());
-    else setSelectedRows(new Set(pageData.map(c => c.id)));
+    setSelectedRows(selectedRows.size === pageData.length ? new Set() : new Set(pageData.map(c => c.id)));
   };
 
-  const getInitial = (name) => name.charAt(0).toUpperCase();
-
-  const loyaltyBadgeClass = (tier) => {
-    if (tier === 'Gold') return 'badge-phoenix-warning';
-    if (tier === 'Silver') return 'badge-phoenix-secondary';
-    return 'badge-phoenix-info';
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this customer?')) return;
+    try {
+      await customerService.delete(id);
+      setCustomers(prev => prev.filter(c => c.id !== id));
+    } catch (err) {
+      alert(err.message || 'Failed to delete');
+    }
   };
+
+  if (loading) {
+    return <div className="d-flex justify-content-center py-9"><div className="spinner-border text-primary" role="status"></div></div>;
+  }
 
   return (
     <>
       <nav className="mb-3" aria-label="breadcrumb">
         <ol className="breadcrumb mb-0">
           <li className="breadcrumb-item"><a href="/">Pet Shop</a></li>
-          <li className="breadcrumb-item"><a href="/pet-shop/customers">Customers</a></li>
-          <li className="breadcrumb-item active">Customer list</li>
+          <li className="breadcrumb-item active">Customers</li>
         </ol>
       </nav>
 
       <div className="mb-9">
         <div className="row g-2 mb-4">
-          <div className="col-auto">
-            <h2 className="mb-0">Customers</h2>
-          </div>
+          <div className="col-auto"><h2 className="mb-0">👥 Customers</h2></div>
         </div>
 
-        {/* Tabs */}
-        <ul className="nav nav-links mb-3 mb-lg-2 mx-n3">
+        {/* Summary Cards */}
+        <div className="row g-3 mb-4">
           {[
-            { key: 'all', label: 'All' },
-            { key: 'new', label: 'New' },
-            { key: 'repeat', label: 'Repeat Buyers' },
-            { key: 'dog', label: 'Dog Owners' },
-            { key: 'cat', label: 'Cat Owners' },
-            { key: 'loyalty', label: 'Loyalty Members' },
-          ].map(tab => (
-            <li key={tab.key} className="nav-item">
-              <a className={`nav-link ${activeTab === tab.key ? 'active' : ''}`}
-                href="#" onClick={(e) => { e.preventDefault(); setActiveTab(tab.key); setPage(1); }}>
-                <span>{tab.label} </span>
-                <span className="text-body-tertiary fw-semibold">({counts[tab.key]})</span>
-              </a>
-            </li>
+            { label: 'Total', value: customers.length, icon: '👥', color: 'primary' },
+            { label: 'Active', value: customers.filter(c => c.status === 'active').length, icon: '✅', color: 'success' },
+            { label: 'Inactive', value: customers.filter(c => c.status === 'inactive').length, icon: '⏸️', color: 'warning' },
+          ].map((card, i) => (
+            <div key={i} className="col-6 col-md-4">
+              <div className="card border border-translucent">
+                <div className="card-body d-flex align-items-center">
+                  <span className="fs-5 me-3">{card.icon}</span>
+                  <div>
+                    <p className="text-body-tertiary mb-0 fs-9">{card.label}</p>
+                    <h4 className="mb-0 text-body-emphasis">{card.value}</h4>
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
 
         {/* Search & Filters */}
-        <div className="mb-4">
-          <div className="row g-3">
-            <div className="col-auto">
-              <div className="search-box">
-                <form className="position-relative">
-                  <input className="form-control search-input search" type="search" placeholder="Search customers"
-                    value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-                  <span className="fas fa-search search-box-icon"></span>
-                </form>
-              </div>
-            </div>
-            <div className="col-auto scrollbar overflow-hidden-y flex-grow-1">
-              <div className="btn-group position-static" role="group">
-                <div className="btn-group position-static text-nowrap">
-                  <button className="btn btn-phoenix-secondary px-7 flex-shrink-0" type="button"
-                    data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
-                    {cityFilter || 'City'}<span className="fas fa-angle-down ms-2"></span>
-                  </button>
-                  <ul className="dropdown-menu">
-                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setCityFilter(''); setPage(1); }}>All Cities</a></li>
-                    {cities.map(c => (
-                      <li key={c}><a className="dropdown-item" href="#"
-                        onClick={(e) => { e.preventDefault(); setCityFilter(c); setPage(1); }}>{c}</a></li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="btn-group position-static text-nowrap">
-                  <button className="btn btn-sm btn-phoenix-secondary px-7 flex-shrink-0" type="button"
-                    data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
-                    {petTypeFilter || 'Pet Type'}<span className="fas fa-angle-down ms-2"></span>
-                  </button>
-                  <ul className="dropdown-menu">
-                    <li><a className="dropdown-item" href="#" onClick={(e) => { e.preventDefault(); setPetTypeFilter(''); setPage(1); }}>All Types</a></li>
-                    {petOwnerTypes.map(pt => (
-                      <li key={pt}><a className="dropdown-item" href="#"
-                        onClick={(e) => { e.preventDefault(); setPetTypeFilter(pt); setPage(1); }}>{pt}</a></li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div className="col-auto">
-              <button className="btn btn-link text-body me-4 px-0">
-                <span className="fa-solid fa-file-export fs-9 me-2"></span>Export
-              </button>
-              <button className="btn btn-primary">
-                <span className="fas fa-plus me-2"></span>Add customer
-              </button>
-            </div>
+        <div className="d-flex flex-wrap gap-3 mb-4">
+          <div className="search-box">
+            <form className="position-relative">
+              <input className="form-control search-input search" type="search" placeholder="Search customers"
+                value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+              <span className="fas fa-search search-box-icon"></span>
+            </form>
+          </div>
+          <select className="form-select" style={{width: 'auto'}} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="banned">Banned</option>
+          </select>
+          <div className="ms-auto">
+            <a className="btn btn-primary" href="/customers/add">
+              <span className="fas fa-plus me-2"></span>Add Customer
+            </a>
           </div>
         </div>
 
@@ -165,19 +127,16 @@ export default function Customers() {
                   <th className="white-space-nowrap fs-9 align-middle ps-0">
                     <div className="form-check mb-0 fs-8">
                       <input className="form-check-input" type="checkbox"
-                        checked={selectedRows.size === pageData.length && pageData.length > 0}
-                        onChange={toggleAll} />
+                        checked={selectedRows.size === pageData.length && pageData.length > 0} onChange={toggleAll} />
                     </div>
                   </th>
-                  <th className="sort align-middle pe-5" scope="col" style={{width: '15%'}}>CUSTOMER</th>
-                  <th className="sort align-middle pe-5" scope="col" style={{width: '18%'}}>EMAIL</th>
-                  <th className="sort align-middle text-end" scope="col" style={{width: '8%'}}>ORDERS</th>
-                  <th className="sort align-middle text-end ps-3" scope="col" style={{width: '10%'}}>TOTAL SPENT</th>
-                  <th className="sort align-middle ps-7" scope="col" style={{width: '10%'}}>CITY</th>
-                  <th className="sort align-middle ps-4" scope="col" style={{width: '10%'}}>PET TYPE</th>
-                  <th className="sort align-middle text-center ps-4" scope="col" style={{width: '8%'}}>LOYALTY</th>
-                  <th className="sort align-middle text-end" scope="col" style={{width: '10%'}}>LAST SEEN</th>
-                  <th className="sort align-middle text-end pe-0" scope="col" style={{width: '11%', minWidth: 150}}>LAST ORDER</th>
+                  <th className="sort align-middle pe-5">CUSTOMER</th>
+                  <th className="sort align-middle pe-5">EMAIL</th>
+                  <th className="sort align-middle">PHONE</th>
+                  <th className="sort align-middle text-end">ORDERS</th>
+                  <th className="sort align-middle text-end ps-3">TOTAL SPENT</th>
+                  <th className="sort align-middle text-center ps-4">STATUS</th>
+                  <th className="sort align-middle text-end pe-0">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="list">
@@ -190,42 +149,40 @@ export default function Customers() {
                       </div>
                     </td>
                     <td className="customer align-middle white-space-nowrap pe-5">
-                      <a className="d-flex align-items-center text-body-emphasis" href="/pet-shop/customer-details">
-                        {customer.avatar ? (
-                          <div className="avatar avatar-m"><img className="rounded-circle" src={customer.avatar} alt="" /></div>
-                        ) : (
-                          <div className="avatar avatar-m">
-                            <div className="avatar-name rounded-circle"><span>{getInitial(customer.name)}</span></div>
-                          </div>
-                        )}
+                      <a className="d-flex align-items-center text-body-emphasis" href={`/customers/${customer.id}`}>
+                        <div className="avatar avatar-m">
+                          <div className="avatar-name rounded-circle"><span>{customer.name.charAt(0)}</span></div>
+                        </div>
                         <p className="mb-0 ms-3 text-body-emphasis fw-bold">{customer.name}</p>
                       </a>
                     </td>
                     <td className="email align-middle white-space-nowrap pe-5">
                       <a className="fw-semibold" href={`mailto:${customer.email}`}>{customer.email}</a>
                     </td>
-                    <td className="total-orders align-middle white-space-nowrap fw-semibold text-end text-body-highlight">
-                      {customer.totalOrders}
+                    <td className="align-middle white-space-nowrap text-body-tertiary">{customer.phone || '-'}</td>
+                    <td className="align-middle white-space-nowrap fw-semibold text-end text-body-highlight">
+                      {customer.total_orders || 0}
                     </td>
-                    <td className="total-spent align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">
-                      {formatCurrency(customer.totalSpent)}
-                    </td>
-                    <td className="city align-middle white-space-nowrap text-body-highlight ps-7">
-                      {customer.city}
-                    </td>
-                    <td className="align-middle white-space-nowrap text-body-highlight ps-4 fs-10">
-                      {customer.petOwnerType}
+                    <td className="align-middle white-space-nowrap fw-bold text-end ps-3 text-body-emphasis">
+                      {formatCurrency(customer.total_spent || 0)}
                     </td>
                     <td className="align-middle white-space-nowrap text-center ps-4">
-                      <span className={`badge badge-phoenix fs-10 ${loyaltyBadgeClass(customer.loyaltyTier)}`}>
-                        {customer.loyaltyTier}
+                      <span className={`badge badge-phoenix fs-10 ${customer.status === 'active' ? 'badge-phoenix-success' : customer.status === 'banned' ? 'badge-phoenix-danger' : 'badge-phoenix-secondary'}`}>
+                        {customer.status}
                       </span>
                     </td>
-                    <td className="last-seen align-middle white-space-nowrap text-body-tertiary text-end">
-                      {customer.lastSeen}
-                    </td>
-                    <td className="last-order align-middle white-space-nowrap text-body-tertiary text-end">
-                      {customer.lastOrder}
+                    <td className="align-middle white-space-nowrap text-end pe-0">
+                      <div className="btn-reveal-trigger position-static">
+                        <button className="btn btn-sm dropdown-toggle dropdown-caret-none transition-none btn-reveal fs-10"
+                          type="button" data-bs-toggle="dropdown" data-boundary="window" data-bs-reference="parent">
+                          <span className="fas fa-ellipsis-h fs-10"></span>
+                        </button>
+                        <div className="dropdown-menu dropdown-menu-end py-2">
+                          <a className="dropdown-item" href={`/customers/${customer.id}`}>View Details</a>
+                          <div className="dropdown-divider"></div>
+                          <a className="dropdown-item text-danger" href="#" onClick={(e) => { e.preventDefault(); handleDelete(customer.id); }}>Delete</a>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))}

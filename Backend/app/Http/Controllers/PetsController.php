@@ -203,4 +203,53 @@ class PetsController extends Controller
             'message' => 'Pet deleted successfully'
         ], 200);
     }
+
+    /**
+     * Bulk delete pets
+     */
+    public function bulkDelete(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+
+        $count = Pets::whereIn('id', $validated['ids'])->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => "{$count} pets deleted successfully",
+        ]);
+    }
+
+    /**
+     * Update stock for a specific pet
+     */
+    public function updateStock(Request $request, $id)
+    {
+        $pet = Pets::find($id);
+
+        if (!$pet) {
+            return response()->json(['status' => false, 'message' => 'Pet not found'], 404);
+        }
+
+        $validated = $request->validate([
+            'stock_quantity' => 'required|integer|min:0',
+            'stock_status' => 'nullable|in:in_stock,out_of_stock,low_stock',
+        ]);
+
+        if (!isset($validated['stock_status'])) {
+            $validated['stock_status'] = $validated['stock_quantity'] > $pet->minimum_stock_alert
+                ? 'in_stock'
+                : ($validated['stock_quantity'] > 0 ? 'low_stock' : 'out_of_stock');
+        }
+
+        $pet->update($validated);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Stock updated successfully',
+            'data' => $pet,
+        ]);
+    }
 }

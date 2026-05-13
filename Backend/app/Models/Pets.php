@@ -62,7 +62,7 @@ class Pets extends Model
 
     public function category()
     {
-        return $this->belongsTo(categories::class);
+        return $this->belongsTo(categories::class, 'pet_category_id');
     }
 
     public function breed()
